@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v2.0 Smart Tabs</title>
+    <title>Strata Command Center | v3.0 Digital Twin</title>
     <style>
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f111a; color: #fff; margin: 0; padding: 20px; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f111a; color: #fff; margin: 0; padding: 20px; overflow-x: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0cf; padding-bottom: 15px; margin-bottom: 20px; }
         .header h1 { margin: 0; font-size: 1.8rem; font-weight: 900; letter-spacing: 1px; color: #fff; }
         .header span { color: #0cf; }
@@ -22,9 +22,13 @@
         .mapping-row { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 15px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #222; }
         .mapping-row select { padding: 10px; background: #222; color: #0cf; border: 1px solid #444; border-radius: 4px; font-size: 1rem; font-weight: bold; width: 200px; }
 
-        /* --- TABS & DASHBOARD --- */
+        /* --- DASHBOARD CONTROLS --- */
         #dashboard-screen { display: none; }
-        .tabs-container { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; border-bottom: 2px solid #333; }
+        .view-controls { display: flex; gap: 10px; margin-bottom: 20px; background: #1a1d27; padding: 10px; border-radius: 8px; border: 1px solid #333; align-items: center; }
+        .view-toggle-btn { flex: 1; padding: 12px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; background: #222; color: #888; transition: 0.2s; }
+        .view-toggle-btn.active { background: #0cf; color: #000; }
+        
+        .tabs-container { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; border-bottom: 2px solid #333; margin-bottom: 20px; }
         .tab { padding: 12px 25px; background: #1a1d27; color: #888; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 1rem; border: 1px solid #333; border-bottom: none; transition: 0.2s; white-space: nowrap; }
         .tab:hover { background: #202430; color: #ccc; }
         .tab.active { background: #0cf; color: #000; border-color: #0cf; }
@@ -34,8 +38,8 @@
         .stat-label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
         .stat-value { font-size: 2rem; font-weight: 900; margin-top: 5px; }
 
-        /* --- THE BUILDING GRID --- */
-        #building-container { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 20px; align-items: flex-end; }
+        /* --- 2D GRID STYLES --- */
+        #building-container-2d { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 20px; align-items: flex-end; }
         .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-width: max-content; }
         .drop-header { text-align: center; font-size: 1.2rem; font-weight: bold; color: #0cf; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         
@@ -46,17 +50,29 @@
         .window-node { width: 40px; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; }
         .window-node:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 10; }
         
+        /* Workflow Colors */
         .status-clear { background: #28a745; } 
         .status-flagged { background: #f1c40f; color: #000; } 
         .status-confirmed { background: #d9534f; } 
         .status-empty { background: #222; border: 2px dashed #444; color: #555; pointer-events: none; }
         .status-void { background: transparent; border: 2px solid transparent; cursor: default; pointer-events: none; }
 
+        /* --- 3D ARENA STYLES --- */
+        #arena-3d { display: none; perspective: 1500px; width: 100%; height: 700px; background: radial-gradient(circle, #1a1d27 0%, #0f111a 100%); border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; align-items: center; justify-content: center; margin-bottom: 20px; }
+        #arena-3d:active { cursor: grabbing; }
+        #world-3d { transform-style: preserve-3d; transition: transform 0.1s ease-out; display: flex; align-items: center; justify-content: center; }
+        .wall-3d { position: absolute; transform-style: preserve-3d; background: rgba(15, 17, 26, 0.8); border: 2px solid #333; padding: 20px; border-radius: 12px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; gap: 15px; align-items: flex-end; }
+        .wall-title-3d { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); color: #0cf; font-size: 1.5rem; font-weight: 900; white-space: nowrap; text-shadow: 0 5px 10px rgba(0,0,0,0.8); }
+
         /* --- MODAL --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(3px); }
-        .modal-box { background: #1a1d27; border: 1px solid #0cf; border-radius: 12px; padding: 25px; width: 400px; box-shadow: 0 15px 35px rgba(0,0,0,0.9); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(3px); }
+        .modal-box { background: #1a1d27; border: 1px solid #0cf; border-radius: 12px; padding: 25px; width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 15px 35px rgba(0,0,0,0.9); }
         .modal-title { font-size: 2rem; color: #0cf; margin: 0 0 5px 0; font-weight: 900; }
-        .modal-subtitle { color: #888; margin-bottom: 20px; font-size: 0.9rem; }
+        .modal-subtitle { color: #888; margin-bottom: 15px; font-size: 0.9rem; }
+        
+        #m-img-preview { width: 100%; border-radius: 8px; border: 2px solid #333; margin-bottom: 15px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .no-photo-banner { background: #222; color: #666; padding: 20px; text-align: center; border-radius: 8px; border: 1px dashed #444; margin-bottom: 15px; font-size: 0.9rem; font-weight: bold; }
+
         .data-row { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 10px 0; }
         .data-label { color: #888; font-size: 0.8rem; text-transform: uppercase; }
         .data-val { font-weight: bold; text-align: right; max-width: 60%; }
@@ -74,7 +90,6 @@
         .btn-green { background: #28a745; color: #fff; }
         .btn-green:hover { background: #218838; }
         .btn-block { width: 100%; margin-top: 10px; }
-
         .header-btns { display: flex; gap: 10px; }
     </style>
 </head>
@@ -82,20 +97,21 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v2.0 Smart Tabs</span></h1>
+            <h1>STRATA COMMAND <span>| v3.0 Digital Twin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
-            <button class="btn btn-dark" id="btn-reset" style="display:none;" onclick="resetBoard()">🔄 CLEAR BOARD</button>
-            <button class="btn btn-blue" id="btn-export" style="display:none;" onclick="exportReviewedCSV()">💾 EXPORT REVIEWED CSV</button>
+            <button class="btn btn-dark" id="btn-reset" style="display:none;" onclick="resetBoard()">🔄 CLEAR</button>
+            <button class="btn btn-blue" id="btn-export" style="display:none;" onclick="exportReviewedCSV()">💾 EXPORT CSV</button>
         </div>
     </div>
 
-    <input type="file" id="csvFileInput" accept=".csv" multiple style="display: none;">
-    <div class="upload-zone" id="drop-zone" onclick="document.getElementById('csvFileInput').click()">
-        <h2 id="drop-text">📥 Drop Field CSVs Here</h2>
-        <p id="drop-subtext" style="color:#555; margin:0; font-size:0.9rem;">or click to browse multiple files</p>
+    <input type="file" id="multiFileInput" accept=".csv, image/*" multiple style="display: none;">
+    <div class="upload-zone" id="drop-zone" onclick="document.getElementById('multiFileInput').click()">
+        <h2 id="drop-text">📥 Drop CSVs & Photo Folders Here</h2>
+        <p id="drop-subtext" style="color:#555; margin:0; font-size:0.9rem;">Select your CSVs and all your FLIR images at the same time</p>
     </div>
+    
     <button id="btn-start-mapping" class="btn btn-green btn-block" style="display:none; padding: 20px; font-size: 1.2rem;" onclick="openMappingScreen()">🗺️ MAP BUILDING ELEVATIONS</button>
 
     <div id="mapping-screen">
@@ -106,16 +122,17 @@
             <input type="text" id="new-elevation-name" placeholder="e.g. North Face, Courtyard, Penthouse...">
             <button class="btn btn-blue" onclick="addElevation()">➕ ADD WALL</button>
         </div>
-
-        <div id="mapping-list">
-            </div>
-
+        <div id="mapping-list"></div>
         <button class="btn btn-green btn-block" style="padding: 20px; font-size: 1.2rem; margin-top: 20px;" onclick="generateDashboard()">✅ GENERATE DASHBOARD</button>
     </div>
 
     <div id="dashboard-screen">
-        <div class="tabs-container" id="tabs-container">
-            </div>
+        
+        <div class="view-controls">
+            <span style="color:#888; font-weight:bold; font-size:0.9rem; margin-right: 10px;">MODE:</span>
+            <button class="view-toggle-btn active" id="btn-2d" onclick="switchView('2d')">2D SMART TABS</button>
+            <button class="view-toggle-btn" id="btn-3d" onclick="switchView('3d')">3D ORBIT ENGINE</button>
+        </div>
 
         <div class="stats-bar" id="stats-bar">
             <div class="stat-card" style="border-color:#28a745;">
@@ -130,16 +147,34 @@
                 <div class="stat-label">Confirmed Defects</div>
                 <div class="stat-value" id="stat-confirmed" style="color:#d9534f;">0</div>
             </div>
+            <div class="stat-card" style="border-color:#0cf;">
+                <div class="stat-label">Images Linked</div>
+                <div class="stat-value" id="stat-photos" style="color:#0cf;">0</div>
+            </div>
         </div>
 
-        <div id="building-container">
+        <div id="view-2d">
+            <div class="tabs-container" id="tabs-container"></div>
+            <div id="building-container-2d"></div>
+        </div>
+
+        <div id="arena-3d">
+            <div id="world-3d">
+                </div>
+            <div style="position: absolute; bottom: 15px; right: 15px; color: #888; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 20px;">
+                🖱️ Click & Drag to Spin
             </div>
+        </div>
+
     </div>
 
     <div class="modal-overlay" id="info-modal">
         <div class="modal-box">
             <h2 class="modal-title" id="m-id">A-12-L</h2>
             <div class="modal-subtitle" id="m-tech">Logged by Tech at 14:30</div>
+            
+            <img id="m-img-preview" src="">
+            <div id="m-no-photo" class="no-photo-banner">IMAGE NOT UPLOADED TO DASHBOARD</div>
             
             <div class="data-row"><span class="data-label">Findings</span><span class="data-val" id="m-finds" style="color:#f1c40f;">--</span></div>
             <div class="data-row"><span class="data-label">Moisture %</span><span class="data-val" id="m-moisture">--</span></div>
@@ -161,15 +196,27 @@
         let projectInfo = "Unknown Project";
         let activeNodeData = null; 
         
+        // --- IMAGE BANK ---
+        let imageBank = {}; // Maps "FLIR0045" to an Object URL
+        let linkedPhotosCount = 0;
+
         // Architecture State
-        let elevations = ["Main Elevation"]; // Default starting wall
-        let dropAssignments = {}; // e.g., {'A': 'Main Elevation'}
+        let elevations = ["Main Elevation"]; 
+        let dropAssignments = {}; 
         let activeTab = "Main Elevation";
         let dropConfigs = {}; 
+        let globalStats = { t:0, f:0, c:0 };
 
-        // --- DRAG AND DROP ---
+        // --- 3D ENGINE STATE ---
+        let currentMode = '2d'; // '2d' or '3d'
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let rotationY = -30; // Starting angle
+        let rotationX = 5;   // Looking slightly down
+
+        // --- DRAG AND DROP LOGIC (UPGRADED FOR IMAGES) ---
         const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('csvFileInput');
+        const fileInput = document.getElementById('multiFileInput');
 
         dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
         dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
@@ -179,30 +226,50 @@
         async function handleFiles(files) {
             if (!files || files.length === 0) return;
 
-            const readPromises = Array.from(files).map(file => {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (event) => { parseCSV(event.target.result); resolve(); };
-                    reader.readAsText(file);
-                });
-            });
+            const csvPromises = [];
 
-            await Promise.all(readPromises);
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Route 1: It's an Image
+                if (file.type.startsWith('image/')) {
+                    // Clean the filename (e.g. "FLIR0045.jpg" -> "FLIR0045")
+                    const cleanName = file.name.split('.')[0].toUpperCase();
+                    imageBank[cleanName] = URL.createObjectURL(file);
+                    linkedPhotosCount++;
+                } 
+                // Route 2: It's a CSV
+                else if (file.name.toLowerCase().endsWith('.csv')) {
+                    csvPromises.push(new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (event) => { parseCSV(event.target.result); resolve(); };
+                        reader.readAsText(file);
+                    }));
+                }
+            }
+
+            await Promise.all(csvPromises);
 
             document.getElementById('project-name').innerText = "Project: " + projectInfo;
+            document.getElementById('stat-photos').innerText = linkedPhotosCount;
             
             dropZone.classList.add('compact');
-            document.getElementById('drop-text').innerText = "➕ Add More CSVs";
-            document.getElementById('drop-subtext').innerText = "Drop files here to expand the building data";
+            document.getElementById('drop-text').innerText = "➕ Add More Files";
+            document.getElementById('drop-subtext').innerText = "Drop CSVs or Photo folders here";
             
             document.getElementById('btn-reset').style.display = 'inline-block';
             document.getElementById('btn-start-mapping').style.display = 'block';
-            document.getElementById('dashboard-screen').style.display = 'none';
+            
+            // If dashboard is already open, instantly refresh to inject new photos
+            if (document.getElementById('dashboard-screen').style.display === 'block') {
+                calculateBuildingGeometry();
+                if (currentMode === '2d') { renderTabs(); render2DGrid(); }
+                else { render3DArena(); }
+            }
 
             fileInput.value = "";
         }
 
-        // --- PARSING ---
         function parseCSV(text) {
             const rows = text.trim().split('\n');
             for (let i = 1; i < rows.length; i++) {
@@ -231,7 +298,6 @@
                         if (!inspectionData[drop]) inspectionData[drop] = {};
                         if (!inspectionData[drop][floor]) inspectionData[drop][floor] = {};
                         
-                        // Preserve management notes if we are just appending new floors to a known drop
                         let existingNotes = "";
                         let existingStatus = status;
                         if(inspectionData[drop][floor][pos]) {
@@ -245,7 +311,6 @@
                             notes: existingNotes
                         };
                         
-                        // Default assignment if it's a new drop
                         if(!dropAssignments[drop]) dropAssignments[drop] = elevations[0];
                     }
                 }
@@ -265,7 +330,7 @@
             if(val && !elevations.includes(val)) {
                 elevations.push(val);
                 input.value = "";
-                renderMappingList(); // Refresh dropdowns
+                renderMappingList();
             }
         }
 
@@ -277,13 +342,10 @@
             drops.forEach(dropStr => {
                 const row = document.createElement('div');
                 row.className = 'mapping-row';
-                
-                const label = document.createElement('div');
-                label.innerHTML = `<strong style="font-size:1.2rem; color:#0cf;">DROP ${dropStr}</strong> <span style="color:#888; font-size:0.8rem; margin-left:10px;">(Assign to Wall)</span>`;
+                row.innerHTML = `<strong style="font-size:1.2rem; color:#0cf;">DROP ${dropStr}</strong>`;
                 
                 const select = document.createElement('select');
                 select.onchange = (e) => { dropAssignments[dropStr] = e.target.value; };
-                
                 elevations.forEach(elev => {
                     const opt = document.createElement('option');
                     opt.value = elev;
@@ -291,82 +353,90 @@
                     if(dropAssignments[dropStr] === elev) opt.selected = true;
                     select.appendChild(opt);
                 });
-
-                row.appendChild(label);
                 row.appendChild(select);
                 list.appendChild(row);
             });
         }
 
-        // --- GENERATE DASHBOARD ---
         function generateDashboard() {
             document.getElementById('mapping-screen').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'block';
             document.getElementById('btn-export').style.display = 'inline-block';
             
-            // Set first tab as active if current is gone
             if(!elevations.includes(activeTab)) activeTab = elevations[0];
             
             calculateBuildingGeometry();
-            renderTabs();
-            renderGrid();
-        }
-
-        function renderTabs() {
-            const container = document.getElementById('tabs-container');
-            container.innerHTML = "";
             
-            // Only show tabs that actually have drops assigned to them
-            const usedElevations = new Set(Object.values(dropAssignments));
-            
-            elevations.forEach(elev => {
-                if(usedElevations.has(elev)) {
-                    const tab = document.createElement('div');
-                    tab.className = `tab ${activeTab === elev ? 'active' : ''}`;
-                    tab.innerText = elev;
-                    tab.onclick = () => {
-                        activeTab = elev;
-                        renderTabs();
-                        renderGrid();
-                    };
-                    container.appendChild(tab);
-                }
-            });
-            
-            // Failsafe: if active tab became empty, switch to the first used one
-            if(!usedElevations.has(activeTab) && usedElevations.size > 0) {
-                activeTab = Array.from(usedElevations)[0];
+            if (currentMode === '2d') {
                 renderTabs();
-                renderGrid();
+                render2DGrid();
+            } else {
+                render3DArena();
             }
         }
 
         function calculateBuildingGeometry() {
             dropConfigs = {};
+            globalStats = { t:0, f:0, c:0 };
             const drops = Object.keys(inspectionData);
             
             drops.forEach(dropStr => {
                 let positionsInDrop = new Set();
                 const floors = Object.keys(inspectionData[dropStr]).map(Number);
                 floors.forEach(f => {
-                    Object.keys(inspectionData[dropStr][f]).forEach(pos => positionsInDrop.add(pos));
+                    Object.keys(inspectionData[dropStr][f]).forEach(pos => {
+                        positionsInDrop.add(pos);
+                        
+                        // Tally global stats here so they are correct in 3D mode too
+                        const d = inspectionData[dropStr][f][pos];
+                        globalStats.t++;
+                        if (d.status === 'status-flagged') globalStats.f++;
+                        if (d.status === 'status-confirmed') globalStats.c++;
+                    });
                 });
-                
                 const order = { 'L': 1, 'C': 2, 'R': 3 };
                 dropConfigs[dropStr] = Array.from(positionsInDrop).sort((a, b) => order[a] - order[b]);
             });
+            updateStatsUI();
         }
 
-        function renderGrid() {
-            const container = document.getElementById('building-container');
-            container.innerHTML = '';
+        function updateStatsUI() {
+            document.getElementById('stat-total').innerText = globalStats.t;
+            document.getElementById('stat-flagged').innerText = globalStats.f;
+            document.getElementById('stat-confirmed').innerText = globalStats.c;
+        }
 
-            let total = 0, flagged = 0, confirmed = 0;
+        // --- VIEW CONTROLLER ---
+        function switchView(mode) {
+            currentMode = mode;
+            document.getElementById('btn-2d').classList.toggle('active', mode === '2d');
+            document.getElementById('btn-3d').classList.toggle('active', mode === '3d');
             
-            // Filter drops to ONLY the ones on the active Tab
-            const activeDrops = Object.keys(inspectionData).filter(d => dropAssignments[d] === activeTab).sort();
+            document.getElementById('view-2d').style.display = (mode === '2d') ? 'block' : 'none';
+            document.getElementById('arena-3d').style.display = (mode === '3d') ? 'flex' : 'none';
 
-            // Calculate max/min floors specifically for THIS elevation wall
+            if(mode === '2d') {
+                renderTabs();
+                render2DGrid();
+            } else {
+                render3DArena();
+            }
+        }
+
+        // --- GRID GENERATOR FACTORY ---
+        // Generates the DOM nodes for a specific wall. Used by both 2D and 3D engines.
+        function generateWallDOM(elevationName) {
+            const fragment = document.createDocumentFragment();
+            const activeDrops = Object.keys(inspectionData).filter(d => dropAssignments[d] === elevationName).sort();
+
+            if(activeDrops.length === 0) {
+                const empty = document.createElement('div');
+                empty.style = "padding: 40px; color:#888; width:100%; text-align:center;";
+                empty.innerText = "No drops assigned.";
+                fragment.appendChild(empty);
+                return fragment;
+            }
+
             let localMaxFloor = -Infinity;
             let localMinFloor = Infinity;
             
@@ -375,12 +445,6 @@
                 localMaxFloor = Math.max(localMaxFloor, ...floors);
                 localMinFloor = Math.min(localMinFloor, ...floors);
             });
-
-            if(activeDrops.length === 0) {
-                container.innerHTML = `<div style="padding: 40px; color:#888; width:100%; text-align:center;">No drops assigned to this elevation.</div>`;
-                updateStats(0,0,0);
-                return;
-            }
 
             activeDrops.forEach(dropStr => {
                 const dropDiv = document.createElement('div');
@@ -392,7 +456,6 @@
                 const dropLowest = Math.min(...localFloors);
                 const activePattern = dropConfigs[dropStr];
 
-                // Build grid from the highest floor of THIS wall, down to the lowest
                 for (let f = localMaxFloor; f >= localMinFloor; f--) {
                     const floorDiv = document.createElement('div');
                     floorDiv.className = 'floor-row';
@@ -410,9 +473,10 @@
                             winNode.innerText = pos;
                             winNode.onclick = () => openModal(data);
                             
-                            total++;
-                            if (data.status === 'status-flagged') flagged++;
-                            if (data.status === 'status-confirmed') confirmed++;
+                            // Visual indicator if a photo is successfully linked!
+                            if (imageBank[data.flir]) {
+                                winNode.style.border = "2px solid #fff";
+                            }
                             
                         } else {
                             if (f <= dropHighest && f >= dropLowest) {
@@ -429,19 +493,117 @@
                     floorDiv.appendChild(winGroup);
                     dropDiv.appendChild(floorDiv);
                 }
-                container.appendChild(dropDiv);
+                fragment.appendChild(dropDiv);
             });
-
-            updateStats(total, flagged, confirmed);
+            return fragment;
         }
 
-        function updateStats(t, f, c) {
-            document.getElementById('stat-total').innerText = t;
-            document.getElementById('stat-flagged').innerText = f;
-            document.getElementById('stat-confirmed').innerText = c;
+        // --- 2D ENGINE LOGIC ---
+        function renderTabs() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = "";
+            const usedElevations = new Set(Object.values(dropAssignments));
+            
+            elevations.forEach(elev => {
+                if(usedElevations.has(elev)) {
+                    const tab = document.createElement('div');
+                    tab.className = `tab ${activeTab === elev ? 'active' : ''}`;
+                    tab.innerText = elev;
+                    tab.onclick = () => { activeTab = elev; renderTabs(); render2DGrid(); };
+                    container.appendChild(tab);
+                }
+            });
+            
+            if(!usedElevations.has(activeTab) && usedElevations.size > 0) {
+                activeTab = Array.from(usedElevations)[0];
+                renderTabs();
+                render2DGrid();
+            }
         }
 
-        // --- MODAL & MANAGEMENT LOGIC ---
+        function render2DGrid() {
+            const container = document.getElementById('building-container-2d');
+            container.innerHTML = '';
+            container.appendChild(generateWallDOM(activeTab));
+        }
+
+        // --- 3D ENGINE LOGIC ---
+        function render3DArena() {
+            const world = document.getElementById('world-3d');
+            world.innerHTML = '';
+            world.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+
+            const usedElevations = Array.from(new Set(Object.values(dropAssignments)));
+            const numWalls = usedElevations.length;
+            
+            if (numWalls === 0) return;
+
+            // Geometry Math: Arrange walls in a circle based on how many there are.
+            const angleStep = 360 / numWalls;
+            // Estimate radius so the walls push out far enough not to overlap
+            const radius = numWalls === 1 ? 0 : Math.max(300, numWalls * 120);
+
+            usedElevations.forEach((elev, index) => {
+                const wallDiv = document.createElement('div');
+                wallDiv.className = 'wall-3d';
+                wallDiv.innerHTML = `<div class="wall-title-3d">${elev}</div>`;
+                
+                wallDiv.appendChild(generateWallDOM(elev));
+                
+                // Position in 3D Space
+                wallDiv.style.transform = `rotateY(${index * angleStep}deg) translateZ(${radius}px)`;
+                
+                world.appendChild(wallDiv);
+            });
+        }
+
+        // 3D Mouse Controls
+        const arena = document.getElementById('arena-3d');
+        arena.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+        
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging && currentMode === '3d') {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+                
+                rotationY += deltaX * 0.4; // Spin left/right
+                rotationX -= deltaY * 0.4; // Tilt up/down
+                
+                // Limit tilt so they don't flip the building upside down
+                if(rotationX > 45) rotationX = 45;
+                if(rotationX < -45) rotationX = -45;
+
+                document.getElementById('world-3d').style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            }
+        });
+        
+        window.addEventListener('mouseup', () => { isDragging = false; });
+        
+        // Touch support for tablets
+        arena.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        });
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging && currentMode === '3d') {
+                const deltaX = e.touches[0].clientX - previousMousePosition.x;
+                const deltaY = e.touches[0].clientY - previousMousePosition.y;
+                rotationY += deltaX * 0.5;
+                rotationX -= deltaY * 0.5;
+                if(rotationX > 45) rotationX = 45;
+                if(rotationX < -45) rotationX = -45;
+                document.getElementById('world-3d').style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+        });
+        window.addEventListener('touchend', () => { isDragging = false; });
+
+
+        // --- MODAL & IMAGE LINKER LOGIC ---
         function openModal(data) {
             activeNodeData = data; 
             document.getElementById('m-id').innerText = data.id;
@@ -452,6 +614,20 @@
             document.getElementById('m-flir').innerText = data.flir;
             document.getElementById('m-notes').value = data.notes;
             
+            // THE IMAGE LINKER
+            const imgEl = document.getElementById('m-img-preview');
+            const noImgEl = document.getElementById('m-no-photo');
+            
+            if (imageBank[data.flir]) {
+                imgEl.src = imageBank[data.flir];
+                imgEl.style.display = 'block';
+                noImgEl.style.display = 'none';
+            } else {
+                imgEl.src = "";
+                imgEl.style.display = 'none';
+                noImgEl.style.display = 'block';
+            }
+            
             document.getElementById('btn-confirm-issue').style.display = (data.status === 'status-flagged') ? 'block' : 'none';
             document.getElementById('info-modal').style.display = 'flex';
         }
@@ -460,7 +636,7 @@
             if (activeNodeData) {
                 activeNodeData.notes = document.getElementById('m-notes').value;
                 activeNodeData.status = 'status-confirmed'; 
-                renderGrid(); 
+                refreshCurrentView();
                 closeModal();
             }
         }
@@ -468,9 +644,15 @@
         function saveNotesOnly() {
             if (activeNodeData) {
                 activeNodeData.notes = document.getElementById('m-notes').value;
-                renderGrid();
+                refreshCurrentView();
                 closeModal();
             }
+        }
+        
+        function refreshCurrentView() {
+            calculateBuildingGeometry();
+            if (currentMode === '2d') render2DGrid();
+            else render3DArena();
         }
 
         function closeModal() {
@@ -482,11 +664,14 @@
         function resetBoard() {
             if(confirm("Are you sure you want to clear all data and start over?")) {
                 inspectionData = {};
+                imageBank = {};
+                linkedPhotosCount = 0;
                 projectInfo = "Unknown Project";
                 elevations = ["Main Elevation"];
                 dropAssignments = {};
                 
                 document.getElementById('project-name').innerText = "Awaiting Data...";
+                document.getElementById('stat-photos').innerText = "0";
                 document.getElementById('dashboard-screen').style.display = 'none';
                 document.getElementById('mapping-screen').style.display = 'none';
                 document.getElementById('btn-export').style.display = 'none';
@@ -494,13 +679,12 @@
                 document.getElementById('btn-start-mapping').style.display = 'none';
                 
                 dropZone.classList.remove('compact');
-                document.getElementById('drop-text').innerText = "📥 Drop Field CSVs Here";
-                document.getElementById('drop-subtext').innerText = "or click to browse multiple files";
+                document.getElementById('drop-text').innerText = "📥 Drop CSVs & Photo Folders Here";
+                document.getElementById('drop-subtext').innerText = "Select your CSVs and all your FLIR images at the same time";
             }
         }
 
         function exportReviewedCSV() {
-            // Added Architectural Wall column to the export
             let csv = "Project,Architectural Wall,Drop ID,FLIR Image,Findings,Moisture %,Meter Proved,Office Review Status,Management Notes\n";
             
             const drops = Object.keys(inspectionData).sort();
