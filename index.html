@@ -1,22 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | Review Pipeline</title>
+    <title>Strata Command Center | v2.0 Smart Tabs</title>
     <style>
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f111a; color: #fff; margin: 0; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0cf; padding-bottom: 15px; margin-bottom: 20px; }
         .header h1 { margin: 0; font-size: 1.8rem; font-weight: 900; letter-spacing: 1px; color: #fff; }
         .header span { color: #0cf; }
         
+        /* --- UPLOAD ZONE --- */
         .upload-zone { background: #1a1d27; border: 2px dashed #333; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: 0.3s; margin-bottom: 20px; }
         .upload-zone:hover, .upload-zone.dragover { border-color: #0cf; background: #202430; }
         .upload-zone h2 { margin: 0 0 10px 0; color: #888; font-size: 1.2rem; transition: 0.3s; }
-        
-        /* Compact mode when data is loaded so it doesn't take up the whole screen */
         .upload-zone.compact { padding: 15px; border-style: dotted; }
         .upload-zone.compact h2 { font-size: 1rem; margin: 0 0 5px 0; }
 
-        .stats-bar { display: flex; gap: 15px; margin-bottom: 20px; display: none; }
+        /* --- MAPPING SCREEN --- */
+        #mapping-screen { background: #1a1d27; border-radius: 12px; padding: 25px; border: 1px solid #333; display: none; margin-bottom: 20px; }
+        .elevation-creator { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 20px; }
+        .elevation-creator input { flex: 1; padding: 12px; background: #111; border: 1px solid #444; color: #fff; border-radius: 6px; font-size: 1rem; }
+        .mapping-row { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 15px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #222; }
+        .mapping-row select { padding: 10px; background: #222; color: #0cf; border: 1px solid #444; border-radius: 4px; font-size: 1rem; font-weight: bold; width: 200px; }
+
+        /* --- TABS & DASHBOARD --- */
+        #dashboard-screen { display: none; }
+        .tabs-container { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; border-bottom: 2px solid #333; }
+        .tab { padding: 12px 25px; background: #1a1d27; color: #888; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 1rem; border: 1px solid #333; border-bottom: none; transition: 0.2s; white-space: nowrap; }
+        .tab:hover { background: #202430; color: #ccc; }
+        .tab.active { background: #0cf; color: #000; border-color: #0cf; }
+
+        .stats-bar { display: flex; gap: 15px; margin-bottom: 20px; }
         .stat-card { flex: 1; background: #1a1d27; padding: 15px; border-radius: 8px; border-left: 4px solid #333; }
         .stat-label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
         .stat-value { font-size: 2rem; font-weight: 900; margin-top: 5px; }
@@ -33,7 +46,6 @@
         .window-node { width: 40px; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; }
         .window-node:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 10; }
         
-        /* Workflow Colors */
         .status-clear { background: #28a745; } 
         .status-flagged { background: #f1c40f; color: #000; } 
         .status-confirmed { background: #d9534f; } 
@@ -52,30 +64,30 @@
         .manager-section { margin-top: 20px; background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; }
         .modal-notes { width: 100%; height: 80px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-top: 5px; font-family: inherit; resize: none; box-sizing: border-box; }
         
-        .btn-confirm { width: 100%; padding: 15px; margin-top: 15px; background: #d9534f; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 900; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-confirm:hover { background: #c9302c; }
-        
-        .btn-close { width: 100%; padding: 12px; margin-top: 10px; background: #333; color: #ccc; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
-        .btn-close:hover { background: #444; }
-
-        .btn-container { display: flex; gap: 10px; }
-        .top-btn { color: #fff; padding: 10px 20px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; display: none; }
+        .btn { padding: 12px 20px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
         .btn-blue { background: #0cf; color: #000; }
         .btn-blue:hover { background: #00aadd; }
-        .btn-dark { background: #333; border: 1px solid #555; }
+        .btn-dark { background: #333; color: #fff; border: 1px solid #555; }
         .btn-dark:hover { background: #444; }
+        .btn-red { background: #d9534f; color: #fff; }
+        .btn-red:hover { background: #c9302c; }
+        .btn-green { background: #28a745; color: #fff; }
+        .btn-green:hover { background: #218838; }
+        .btn-block { width: 100%; margin-top: 10px; }
+
+        .header-btns { display: flex; gap: 10px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| Review Pipeline</span></h1>
+            <h1>STRATA COMMAND <span>| v2.0 Smart Tabs</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
-        <div class="btn-container">
-            <button class="top-btn btn-dark" id="btn-reset" onclick="resetBoard()">🔄 CLEAR BOARD</button>
-            <button class="top-btn btn-blue" id="btn-export" onclick="exportReviewedCSV()">💾 EXPORT REVIEWED CSV</button>
+        <div class="header-btns">
+            <button class="btn btn-dark" id="btn-reset" style="display:none;" onclick="resetBoard()">🔄 CLEAR BOARD</button>
+            <button class="btn btn-blue" id="btn-export" style="display:none;" onclick="exportReviewedCSV()">💾 EXPORT REVIEWED CSV</button>
         </div>
     </div>
 
@@ -84,24 +96,45 @@
         <h2 id="drop-text">📥 Drop Field CSVs Here</h2>
         <p id="drop-subtext" style="color:#555; margin:0; font-size:0.9rem;">or click to browse multiple files</p>
     </div>
+    <button id="btn-start-mapping" class="btn btn-green btn-block" style="display:none; padding: 20px; font-size: 1.2rem;" onclick="openMappingScreen()">🗺️ MAP BUILDING ELEVATIONS</button>
 
-    <div class="stats-bar" id="stats-bar">
-        <div class="stat-card" style="border-color:#28a745;">
-            <div class="stat-label">Total Windows Scanned</div>
-            <div class="stat-value" id="stat-total">0</div>
+    <div id="mapping-screen">
+        <h2 style="margin-top:0; color:#0cf;">Assign Drops to Walls</h2>
+        <p style="color:#888; margin-bottom: 20px;">Create your building sides, then assign each drop below.</p>
+        
+        <div class="elevation-creator">
+            <input type="text" id="new-elevation-name" placeholder="e.g. North Face, Courtyard, Penthouse...">
+            <button class="btn btn-blue" onclick="addElevation()">➕ ADD WALL</button>
         </div>
-        <div class="stat-card" style="border-color:#f1c40f;">
-            <div class="stat-label">Unconfirmed Flags (Yellow)</div>
-            <div class="stat-value" id="stat-flagged" style="color:#f1c40f;">0</div>
-        </div>
-        <div class="stat-card" style="border-color:#d9534f;">
-            <div class="stat-label">Confirmed Defects (Red)</div>
-            <div class="stat-value" id="stat-confirmed" style="color:#d9534f;">0</div>
-        </div>
+
+        <div id="mapping-list">
+            </div>
+
+        <button class="btn btn-green btn-block" style="padding: 20px; font-size: 1.2rem; margin-top: 20px;" onclick="generateDashboard()">✅ GENERATE DASHBOARD</button>
     </div>
 
-    <div id="building-container">
+    <div id="dashboard-screen">
+        <div class="tabs-container" id="tabs-container">
+            </div>
+
+        <div class="stats-bar" id="stats-bar">
+            <div class="stat-card" style="border-color:#28a745;">
+                <div class="stat-label">Total Windows</div>
+                <div class="stat-value" id="stat-total">0</div>
+            </div>
+            <div class="stat-card" style="border-color:#f1c40f;">
+                <div class="stat-label">Pending Review</div>
+                <div class="stat-value" id="stat-flagged" style="color:#f1c40f;">0</div>
+            </div>
+            <div class="stat-card" style="border-color:#d9534f;">
+                <div class="stat-label">Confirmed Defects</div>
+                <div class="stat-value" id="stat-confirmed" style="color:#d9534f;">0</div>
+            </div>
         </div>
+
+        <div id="building-container">
+            </div>
+    </div>
 
     <div class="modal-overlay" id="info-modal">
         <div class="modal-box">
@@ -116,95 +149,68 @@
             <div class="manager-section">
                 <span class="data-label" style="color:#fff;">Management Notes</span>
                 <textarea id="m-notes" class="modal-notes" placeholder="e.g. Schedule sealant replacement..."></textarea>
-                
-                <button id="btn-confirm-issue" class="btn-confirm" onclick="confirmIssue()">🚨 CONFIRM ISSUE</button>
+                <button id="btn-confirm-issue" class="btn btn-red btn-block" onclick="confirmIssue()">🚨 CONFIRM ISSUE</button>
             </div>
             
-            <button class="btn-close" onclick="saveNotesOnly()">💾 SAVE NOTES & CLOSE</button>
+            <button class="btn btn-dark btn-block" onclick="saveNotesOnly()">💾 SAVE NOTES & CLOSE</button>
         </div>
     </div>
 
     <script>
-        // Data is now persistent across multiple file uploads
         let inspectionData = {};
         let projectInfo = "Unknown Project";
         let activeNodeData = null; 
-
-        let globalMaxFloor = -Infinity;
-        let globalMinFloor = Infinity;
+        
+        // Architecture State
+        let elevations = ["Main Elevation"]; // Default starting wall
+        let dropAssignments = {}; // e.g., {'A': 'Main Elevation'}
+        let activeTab = "Main Elevation";
         let dropConfigs = {}; 
 
-        // --- DRAG AND DROP LOGIC ---
+        // --- DRAG AND DROP ---
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('csvFileInput');
 
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-
-        dropZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            handleFiles(e.dataTransfer.files);
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            handleFiles(e.target.files);
-        });
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+        fileInput.addEventListener('change', (e) => { handleFiles(e.target.files); });
 
         async function handleFiles(files) {
             if (!files || files.length === 0) return;
 
-            // Process all selected/dropped files asynchronously
             const readPromises = Array.from(files).map(file => {
                 return new Promise((resolve) => {
                     const reader = new FileReader();
-                    reader.onload = (event) => {
-                        parseCSV(event.target.result); // Ingests and merges the data
-                        resolve();
-                    };
+                    reader.onload = (event) => { parseCSV(event.target.result); resolve(); };
                     reader.readAsText(file);
                 });
             });
 
             await Promise.all(readPromises);
 
-            // Update the UI
             document.getElementById('project-name').innerText = "Project: " + projectInfo;
             
-            // Shrink the drop zone so it's out of the way, but still usable
             dropZone.classList.add('compact');
             document.getElementById('drop-text').innerText = "➕ Add More CSVs";
-            document.getElementById('drop-subtext').innerText = "Drop files here to expand the building";
+            document.getElementById('drop-subtext').innerText = "Drop files here to expand the building data";
             
-            document.getElementById('btn-export').style.display = 'inline-block';
             document.getElementById('btn-reset').style.display = 'inline-block';
+            document.getElementById('btn-start-mapping').style.display = 'block';
+            document.getElementById('dashboard-screen').style.display = 'none';
 
-            calculateBuildingGeometry();
-            updateGridAndStats();
-            
-            // Reset input so the same file can be selected again if needed
             fileInput.value = "";
         }
 
-        // --- CSV PARSING & MERGING ---
+        // --- PARSING ---
         function parseCSV(text) {
             const rows = text.trim().split('\n');
-            
             for (let i = 1; i < rows.length; i++) {
                 if(!rows[i]) continue;
                 const cols = rows[i].replace(/"/g, '').split(',');
                 
                 if (cols.length >= 8) {
-                    if (projectInfo === "Unknown Project") {
-                        projectInfo = cols[0]; // Take project name from the first file we parse
-                    }
+                    if (projectInfo === "Unknown Project") projectInfo = cols[0];
                     const tech = cols[2];
                     const fullId = cols[3]; 
                     const flir = cols[4];
@@ -214,9 +220,7 @@
                     const time = cols[8];
 
                     let status = 'status-clear';
-                    if (!finds.includes('CLEAR')) {
-                        status = 'status-flagged'; 
-                    }
+                    if (!finds.includes('CLEAR')) status = 'status-flagged'; 
 
                     const parts = fullId.split('-');
                     if(parts.length === 3) {
@@ -227,32 +231,124 @@
                         if (!inspectionData[drop]) inspectionData[drop] = {};
                         if (!inspectionData[drop][floor]) inspectionData[drop][floor] = {};
                         
-                        // If window already exists from a previous upload, this will overwrite it with the latest data
+                        // Preserve management notes if we are just appending new floors to a known drop
+                        let existingNotes = "";
+                        let existingStatus = status;
+                        if(inspectionData[drop][floor][pos]) {
+                            existingNotes = inspectionData[drop][floor][pos].notes;
+                            if(inspectionData[drop][floor][pos].status === 'status-confirmed') existingStatus = 'status-confirmed';
+                        }
+
                         inspectionData[drop][floor][pos] = {
                             id: fullId, flir: flir, finds: finds, mPct: moistPct, 
-                            proved: proved, tech: tech, time: time, status: status,
-                            notes: ""
+                            proved: proved, tech: tech, time: time, status: existingStatus,
+                            notes: existingNotes
                         };
+                        
+                        // Default assignment if it's a new drop
+                        if(!dropAssignments[drop]) dropAssignments[drop] = elevations[0];
                     }
                 }
             }
         }
 
+        // --- MAPPING (THE SORTING HAT) ---
+        function openMappingScreen() {
+            document.getElementById('btn-start-mapping').style.display = 'none';
+            document.getElementById('mapping-screen').style.display = 'block';
+            renderMappingList();
+        }
+
+        function addElevation() {
+            const input = document.getElementById('new-elevation-name');
+            const val = input.value.trim();
+            if(val && !elevations.includes(val)) {
+                elevations.push(val);
+                input.value = "";
+                renderMappingList(); // Refresh dropdowns
+            }
+        }
+
+        function renderMappingList() {
+            const list = document.getElementById('mapping-list');
+            list.innerHTML = "";
+            const drops = Object.keys(inspectionData).sort();
+
+            drops.forEach(dropStr => {
+                const row = document.createElement('div');
+                row.className = 'mapping-row';
+                
+                const label = document.createElement('div');
+                label.innerHTML = `<strong style="font-size:1.2rem; color:#0cf;">DROP ${dropStr}</strong> <span style="color:#888; font-size:0.8rem; margin-left:10px;">(Assign to Wall)</span>`;
+                
+                const select = document.createElement('select');
+                select.onchange = (e) => { dropAssignments[dropStr] = e.target.value; };
+                
+                elevations.forEach(elev => {
+                    const opt = document.createElement('option');
+                    opt.value = elev;
+                    opt.innerText = elev;
+                    if(dropAssignments[dropStr] === elev) opt.selected = true;
+                    select.appendChild(opt);
+                });
+
+                row.appendChild(label);
+                row.appendChild(select);
+                list.appendChild(row);
+            });
+        }
+
+        // --- GENERATE DASHBOARD ---
+        function generateDashboard() {
+            document.getElementById('mapping-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'block';
+            document.getElementById('btn-export').style.display = 'inline-block';
+            
+            // Set first tab as active if current is gone
+            if(!elevations.includes(activeTab)) activeTab = elevations[0];
+            
+            calculateBuildingGeometry();
+            renderTabs();
+            renderGrid();
+        }
+
+        function renderTabs() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = "";
+            
+            // Only show tabs that actually have drops assigned to them
+            const usedElevations = new Set(Object.values(dropAssignments));
+            
+            elevations.forEach(elev => {
+                if(usedElevations.has(elev)) {
+                    const tab = document.createElement('div');
+                    tab.className = `tab ${activeTab === elev ? 'active' : ''}`;
+                    tab.innerText = elev;
+                    tab.onclick = () => {
+                        activeTab = elev;
+                        renderTabs();
+                        renderGrid();
+                    };
+                    container.appendChild(tab);
+                }
+            });
+            
+            // Failsafe: if active tab became empty, switch to the first used one
+            if(!usedElevations.has(activeTab) && usedElevations.size > 0) {
+                activeTab = Array.from(usedElevations)[0];
+                renderTabs();
+                renderGrid();
+            }
+        }
+
         function calculateBuildingGeometry() {
             dropConfigs = {};
-            globalMaxFloor = -Infinity;
-            globalMinFloor = Infinity;
-
             const drops = Object.keys(inspectionData);
             
             drops.forEach(dropStr => {
                 let positionsInDrop = new Set();
                 const floors = Object.keys(inspectionData[dropStr]).map(Number);
-                
                 floors.forEach(f => {
-                    if (f > globalMaxFloor) globalMaxFloor = f;
-                    if (f < globalMinFloor) globalMinFloor = f;
-                    
                     Object.keys(inspectionData[dropStr][f]).forEach(pos => positionsInDrop.add(pos));
                 });
                 
@@ -261,25 +357,43 @@
             });
         }
 
-        // --- RENDER GRID & STATS ---
-        function updateGridAndStats() {
+        function renderGrid() {
             const container = document.getElementById('building-container');
             container.innerHTML = '';
 
             let total = 0, flagged = 0, confirmed = 0;
-            const drops = Object.keys(inspectionData).sort();
+            
+            // Filter drops to ONLY the ones on the active Tab
+            const activeDrops = Object.keys(inspectionData).filter(d => dropAssignments[d] === activeTab).sort();
 
-            drops.forEach(dropStr => {
+            // Calculate max/min floors specifically for THIS elevation wall
+            let localMaxFloor = -Infinity;
+            let localMinFloor = Infinity;
+            
+            activeDrops.forEach(d => {
+                const floors = Object.keys(inspectionData[d]).map(Number);
+                localMaxFloor = Math.max(localMaxFloor, ...floors);
+                localMinFloor = Math.min(localMinFloor, ...floors);
+            });
+
+            if(activeDrops.length === 0) {
+                container.innerHTML = `<div style="padding: 40px; color:#888; width:100%; text-align:center;">No drops assigned to this elevation.</div>`;
+                updateStats(0,0,0);
+                return;
+            }
+
+            activeDrops.forEach(dropStr => {
                 const dropDiv = document.createElement('div');
                 dropDiv.className = 'drop-column';
                 dropDiv.innerHTML = `<div class="drop-header">DROP ${dropStr}</div>`;
 
                 const localFloors = Object.keys(inspectionData[dropStr]).map(Number);
-                const localMax = Math.max(...localFloors);
-                const localMin = Math.min(...localFloors);
+                const dropHighest = Math.max(...localFloors);
+                const dropLowest = Math.min(...localFloors);
                 const activePattern = dropConfigs[dropStr];
 
-                for (let f = globalMaxFloor; f >= globalMinFloor; f--) {
+                // Build grid from the highest floor of THIS wall, down to the lowest
+                for (let f = localMaxFloor; f >= localMinFloor; f--) {
                     const floorDiv = document.createElement('div');
                     floorDiv.className = 'floor-row';
                     floorDiv.innerHTML = `<div class="floor-label">${f}F</div>`;
@@ -301,7 +415,7 @@
                             if (data.status === 'status-confirmed') confirmed++;
                             
                         } else {
-                            if (f <= localMax && f >= localMin) {
+                            if (f <= dropHighest && f >= dropLowest) {
                                 winNode.className = `window-node status-empty`;
                                 winNode.innerText = pos;
                             } else {
@@ -318,16 +432,18 @@
                 container.appendChild(dropDiv);
             });
 
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-flagged').innerText = flagged;
-            document.getElementById('stat-confirmed').innerText = confirmed;
-            document.getElementById('stats-bar').style.display = 'flex';
+            updateStats(total, flagged, confirmed);
+        }
+
+        function updateStats(t, f, c) {
+            document.getElementById('stat-total').innerText = t;
+            document.getElementById('stat-flagged').innerText = f;
+            document.getElementById('stat-confirmed').innerText = c;
         }
 
         // --- MODAL & MANAGEMENT LOGIC ---
         function openModal(data) {
             activeNodeData = data; 
-            
             document.getElementById('m-id').innerText = data.id;
             document.getElementById('m-tech').innerText = `Logged by ${data.tech} at ${data.time}`;
             document.getElementById('m-finds').innerText = data.finds;
@@ -336,12 +452,7 @@
             document.getElementById('m-flir').innerText = data.flir;
             document.getElementById('m-notes').value = data.notes;
             
-            if (data.status === 'status-flagged') {
-                document.getElementById('btn-confirm-issue').style.display = 'block';
-            } else {
-                document.getElementById('btn-confirm-issue').style.display = 'none';
-            }
-
+            document.getElementById('btn-confirm-issue').style.display = (data.status === 'status-flagged') ? 'block' : 'none';
             document.getElementById('info-modal').style.display = 'flex';
         }
 
@@ -349,7 +460,7 @@
             if (activeNodeData) {
                 activeNodeData.notes = document.getElementById('m-notes').value;
                 activeNodeData.status = 'status-confirmed'; 
-                updateGridAndStats(); 
+                renderGrid(); 
                 closeModal();
             }
         }
@@ -357,7 +468,7 @@
         function saveNotesOnly() {
             if (activeNodeData) {
                 activeNodeData.notes = document.getElementById('m-notes').value;
-                updateGridAndStats();
+                renderGrid();
                 closeModal();
             }
         }
@@ -369,14 +480,18 @@
 
         // --- UTILITIES ---
         function resetBoard() {
-            if(confirm("Are you sure you want to clear the entire building from the screen?")) {
+            if(confirm("Are you sure you want to clear all data and start over?")) {
                 inspectionData = {};
                 projectInfo = "Unknown Project";
+                elevations = ["Main Elevation"];
+                dropAssignments = {};
+                
                 document.getElementById('project-name').innerText = "Awaiting Data...";
-                document.getElementById('building-container').innerHTML = '';
-                document.getElementById('stats-bar').style.display = 'none';
+                document.getElementById('dashboard-screen').style.display = 'none';
+                document.getElementById('mapping-screen').style.display = 'none';
                 document.getElementById('btn-export').style.display = 'none';
                 document.getElementById('btn-reset').style.display = 'none';
+                document.getElementById('btn-start-mapping').style.display = 'none';
                 
                 dropZone.classList.remove('compact');
                 document.getElementById('drop-text').innerText = "📥 Drop Field CSVs Here";
@@ -385,10 +500,12 @@
         }
 
         function exportReviewedCSV() {
-            let csv = "Project,Drop ID,FLIR Image,Findings,Moisture %,Meter Proved,Office Review Status,Management Notes\n";
+            // Added Architectural Wall column to the export
+            let csv = "Project,Architectural Wall,Drop ID,FLIR Image,Findings,Moisture %,Meter Proved,Office Review Status,Management Notes\n";
             
             const drops = Object.keys(inspectionData).sort();
             drops.forEach(dropStr => {
+                const wall = dropAssignments[dropStr];
                 const floors = Object.keys(inspectionData[dropStr]).sort((a,b) => b-a); 
                 floors.forEach(f => {
                     const activePattern = dropConfigs[dropStr];
@@ -403,7 +520,7 @@
                             const cleanNotes = `"${d.notes.replace(/"/g, '""')}"`;
                             const cleanFinds = `"${d.finds}"`;
 
-                            csv += `"${projectInfo}","${d.id}","${d.flir}",${cleanFinds},"${d.mPct}","${d.proved}","${textStatus}",${cleanNotes}\n`;
+                            csv += `"${projectInfo}","${wall}","${d.id}","${d.flir}",${cleanFinds},"${d.mPct}","${d.proved}","${textStatus}",${cleanNotes}\n`;
                         }
                     });
                 });
@@ -412,7 +529,7 @@
             const blob = new Blob([csv], { type: 'text/csv' });
             const a = document.createElement('a'); 
             a.href = URL.createObjectURL(blob); 
-            a.download = `Strata_Reviewed_${projectInfo.replace(/\s+/g, '_')}.csv`; 
+            a.download = `Strata_Master_Review_${projectInfo.replace(/\s+/g, '_')}.csv`; 
             a.click();
         }
     </script>
