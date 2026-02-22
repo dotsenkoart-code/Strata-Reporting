@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v4.2 Digital Twin</title>
+    <title>Strata Command Center | v4.3 Digital Twin</title>
     <style>
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f111a; color: #fff; margin: 0; padding: 20px; overflow-x: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0cf; padding-bottom: 15px; margin-bottom: 20px; }
@@ -41,13 +41,13 @@
         .stat-label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
         .stat-value { font-size: 2rem; font-weight: 900; margin-top: 5px; }
 
-        /* --- 2D GRID STYLES --- */
-        #building-container-2d { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 20px; align-items: flex-end; }
-        .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-width: max-content; }
-        .drop-header { text-align: center; font-size: 1.2rem; font-weight: bold; color: #0cf; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        /* --- 2D GRID STYLES (UPDATED FOR TIGHTER SPACING) --- */
+        #building-container-2d { display: flex; gap: 2px; overflow-x: auto; padding-bottom: 20px; align-items: flex-end; }
+        .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 6px; padding: 5px 2px; display: flex; flex-direction: column; min-width: max-content; }
+        .drop-header { text-align: center; font-size: 1rem; font-weight: bold; color: #0cf; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
         .floor-row { display: flex; align-items: center; margin-bottom: 4px; }
-        .floor-label { width: 35px; font-weight: bold; color: #666; font-size: 0.85rem; text-align: right; margin-right: 8px; }
+        .floor-label { width: 30px; font-weight: bold; color: #666; font-size: 0.75rem; text-align: right; margin-right: 5px; }
         
         .window-group { display: flex; gap: 4px; flex: 1; justify-content: center; width: 140px; } 
         .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; position: relative; }
@@ -60,11 +60,11 @@
         .status-empty { background: #222; border: 2px dashed #444; color: #555; pointer-events: none; }
         .status-void { background: transparent; border: 2px solid transparent; cursor: default; pointer-events: none; }
 
-        /* --- 3D ARENA STYLES --- */
+        /* --- 3D ARENA STYLES (UPDATED FOR TIGHTER SPACING) --- */
         #arena-3d { display: none; perspective: 1500px; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #1a1d27 0%, #0f111a 100%); border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; align-items: center; justify-content: center; margin-bottom: 20px; }
         #arena-3d:active { cursor: grabbing; }
         #world-3d { transform-style: preserve-3d; transition: transform 0.1s ease-out; display: flex; align-items: center; justify-content: center; }
-        .wall-3d { position: absolute; transform-style: preserve-3d; background: rgba(15, 17, 26, 0.8); border: 2px solid #333; padding: 20px; border-radius: 12px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; gap: 15px; align-items: flex-end; }
+        .wall-3d { position: absolute; transform-style: preserve-3d; background: rgba(15, 17, 26, 0.8); border: 2px solid #333; padding: 15px 5px; border-radius: 12px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; gap: 2px; align-items: flex-end; }
         .wall-title-3d { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); color: #0cf; font-size: 1.5rem; font-weight: 900; white-space: nowrap; text-shadow: 0 5px 10px rgba(0,0,0,0.8); }
 
         /* --- MODAL --- */
@@ -102,7 +102,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v4.2 Digital Twin</span></h1>
+            <h1>STRATA COMMAND <span>| v4.3 Digital Twin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
