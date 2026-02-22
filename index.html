@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v4.1 Digital Twin</title>
+    <title>Strata Command Center | v4.2 Digital Twin</title>
     <style>
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f111a; color: #fff; margin: 0; padding: 20px; overflow-x: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0cf; padding-bottom: 15px; margin-bottom: 20px; }
@@ -102,7 +102,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v4.1 Digital Twin</span></h1>
+            <h1>STRATA COMMAND <span>| v4.2 Digital Twin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -216,7 +216,7 @@
         let elevations = ["Main Elevation"]; 
         let dropAssignments = {}; 
         let activeTab = "Main Elevation";
-        let globalStats = { t:0, f:0, c:0 };
+        let globalStats = { t:0, f:0, c:0, maxFloor: -Infinity, minFloor: Infinity };
 
         // --- 3D ENGINE STATE ---
         let currentMode = '2d'; 
@@ -423,12 +423,16 @@
         }
 
         function calculateBuildingGeometry() {
-            globalStats = { t:0, f:0, c:0 };
+            globalStats = { t:0, f:0, c:0, maxFloor: -Infinity, minFloor: Infinity };
             const drops = Object.keys(inspectionData);
             
             drops.forEach(dropStr => {
                 const floors = Object.keys(inspectionData[dropStr]).map(Number);
                 floors.forEach(f => {
+                    // Update global highest and lowest floors
+                    if (f > globalStats.maxFloor) globalStats.maxFloor = f;
+                    if (f < globalStats.minFloor) globalStats.minFloor = f;
+
                     Object.keys(inspectionData[dropStr][f]).forEach(pos => {
                         const d = inspectionData[dropStr][f][pos];
                         globalStats.t++;
@@ -437,6 +441,11 @@
                     });
                 });
             });
+
+            if (globalStats.maxFloor === -Infinity) {
+                globalStats.maxFloor = 0;
+                globalStats.minFloor = 0;
+            }
             
             stitchedPairs.forEach(pair => {
                 let d1 = getNodeData(pair[0]); let d2 = getNodeData(pair[1]);
@@ -476,7 +485,8 @@
         }
 
         // --- GRID GENERATOR FACTORY ---
-        function generateWallDOM(elevationName) {
+        // Added parameter: useGlobalFloors (Forces 3D walls to all be identical height)
+        function generateWallDOM(elevationName, useGlobalFloors = false) {
             const fragment = document.createDocumentFragment();
             const activeDrops = Object.keys(inspectionData).filter(d => dropAssignments[d] === elevationName).sort();
 
@@ -488,21 +498,26 @@
                 return fragment;
             }
 
-            let localMaxFloor = -Infinity;
-            let localMinFloor = Infinity;
+            let renderMaxFloor = -Infinity;
+            let renderMinFloor = Infinity;
             
-            activeDrops.forEach(d => {
-                const floors = Object.keys(inspectionData[d]).map(Number);
-                localMaxFloor = Math.max(localMaxFloor, ...floors);
-                localMinFloor = Math.min(localMinFloor, ...floors);
-            });
+            if (useGlobalFloors) {
+                renderMaxFloor = globalStats.maxFloor;
+                renderMinFloor = globalStats.minFloor;
+            } else {
+                activeDrops.forEach(d => {
+                    const floors = Object.keys(inspectionData[d]).map(Number);
+                    renderMaxFloor = Math.max(renderMaxFloor, ...floors);
+                    renderMinFloor = Math.min(renderMinFloor, ...floors);
+                });
+            }
 
             activeDrops.forEach(dropStr => {
                 const dropDiv = document.createElement('div');
                 dropDiv.className = 'drop-column';
                 dropDiv.innerHTML = `<div class="drop-header">DROP ${dropStr}</div>`;
 
-                for (let f = localMaxFloor; f >= localMinFloor; f--) {
+                for (let f = renderMaxFloor; f >= renderMinFloor; f--) {
                     const floorDiv = document.createElement('div');
                     floorDiv.className = 'floor-row';
                     floorDiv.innerHTML = `<div class="floor-label">${f}F</div>`;
@@ -510,7 +525,7 @@
                     const winGroup = document.createElement('div');
                     winGroup.className = 'window-group';
 
-                    if (inspectionData[dropStr][f]) {
+                    if (inspectionData[dropStr] && inspectionData[dropStr][f]) {
                         const order = { 'L': 1, 'C': 2, 'R': 3 };
                         const activeFloorPattern = Object.keys(inspectionData[dropStr][f]).sort((a, b) => order[a] - order[b]);
                         
@@ -552,6 +567,7 @@
                             winGroup.appendChild(winNode);
                         });
                     } else {
+                        // INVISIBLE SPACER: Propping up the short walls in 3D Mode
                         const winNode = document.createElement('div');
                         winNode.className = `window-node status-void`;
                         winGroup.appendChild(winNode);
@@ -589,7 +605,8 @@
         function render2DGrid() {
             const container = document.getElementById('building-container-2d');
             container.innerHTML = '';
-            container.appendChild(generateWallDOM(activeTab));
+            // Pass false so 2D mode stays compact and doesn't render empty vertical space
+            container.appendChild(generateWallDOM(activeTab, false));
         }
 
         // --- UPDATED 3D ARENA MATH ENGINE ---
@@ -604,32 +621,32 @@
             if (numWalls === 0) return;
             const angleStep = 360 / numWalls;
             
-            // MATH ENGINE: Calculate max width of walls dynamically to prevent corner clipping
             let maxDropsOnAWall = 0;
             usedElevations.forEach(elev => {
                 const dropsOnThisWall = Object.keys(inspectionData).filter(d => dropAssignments[d] === elev).length;
                 if(dropsOnThisWall > maxDropsOnAWall) maxDropsOnAWall = dropsOnThisWall;
             });
             
-            // Approx 170px width per drop + 100px wall padding
             const estimatedMaxWidth = Math.max(300, (maxDropsOnAWall * 170) + 100);
 
             let radius = 0;
             if (numWalls === 1) {
                 radius = 0;
             } else if (numWalls === 2) {
-                radius = estimatedMaxWidth / 2 + 50; // Push apart back-to-back
+                radius = estimatedMaxWidth / 2 + 50; 
             } else {
-                // Polygon radius math: (Width / 2) / Tangent( 180 / Number of Sides )
                 radius = (estimatedMaxWidth / 2) / Math.tan(Math.PI / numWalls);
-                radius += 100; // Extra safety buffer
+                radius += 100; 
             }
 
             usedElevations.forEach((elev, index) => {
                 const wallDiv = document.createElement('div');
                 wallDiv.className = 'wall-3d';
                 wallDiv.innerHTML = `<div class="wall-title-3d">${elev}</div>`;
-                wallDiv.appendChild(generateWallDOM(elev));
+                
+                // Pass true to force global height alignment in 3D Space
+                wallDiv.appendChild(generateWallDOM(elev, true));
+                
                 wallDiv.style.transform = `rotateY(${index * angleStep}deg) translateZ(${radius}px)`;
                 world.appendChild(wallDiv);
             });
@@ -643,7 +660,7 @@
                 zoomZ -= e.deltaY * 2; 
                 document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
             }
-        }, { passive: false }); // added passive false to ensure scroll blocks on the body
+        }, { passive: false }); 
 
         arena.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; });
         window.addEventListener('mousemove', (e) => {
