@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v3.0 Digital Twin</title>
+    <title>Strata Command Center | v4.0 Digital Twin</title>
     <style>
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f111a; color: #fff; margin: 0; padding: 20px; overflow-x: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0cf; padding-bottom: 15px; margin-bottom: 20px; }
@@ -28,6 +28,9 @@
         .view-toggle-btn { flex: 1; padding: 12px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; background: #222; color: #888; transition: 0.2s; }
         .view-toggle-btn.active { background: #0cf; color: #000; }
         
+        .stitch-mode-on { border-color: #f39c12 !important; background: rgba(243, 156, 18, 0.2) !important; color: #f39c12 !important; box-shadow: 0 0 10px rgba(243, 156, 18, 0.5); }
+        .node-selected { border-color: #0cf !important; transform: scale(1.1); box-shadow: 0 0 15px #0cf !important; z-index: 20 !important; }
+
         .tabs-container { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; border-bottom: 2px solid #333; margin-bottom: 20px; }
         .tab { padding: 12px 25px; background: #1a1d27; color: #888; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; font-size: 1rem; border: 1px solid #333; border-bottom: none; transition: 0.2s; white-space: nowrap; }
         .tab:hover { background: #202430; color: #ccc; }
@@ -46,9 +49,8 @@
         .floor-row { display: flex; align-items: center; margin-bottom: 4px; }
         .floor-label { width: 35px; font-weight: bold; color: #666; font-size: 0.85rem; text-align: right; margin-right: 8px; }
         
-        /* Flex-based Dynamic Columns */
         .window-group { display: flex; gap: 4px; flex: 1; justify-content: center; width: 140px; } 
-        .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; }
+        .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; position: relative; }
         .window-node:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 10; }
         
         /* Workflow Colors */
@@ -67,16 +69,18 @@
 
         /* --- MODAL --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(3px); }
-        .modal-box { background: #1a1d27; border: 1px solid #0cf; border-radius: 12px; padding: 25px; width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 15px 35px rgba(0,0,0,0.9); }
+        .modal-box { background: #1a1d27; border: 1px solid #0cf; border-radius: 12px; padding: 25px; width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 15px 35px rgba(0,0,0,0.9); }
         .modal-title { font-size: 2rem; color: #0cf; margin: 0 0 5px 0; font-weight: 900; }
         .modal-subtitle { color: #888; margin-bottom: 15px; font-size: 0.9rem; }
         
-        #m-img-preview { width: 100%; border-radius: 8px; border: 2px solid #333; margin-bottom: 15px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .photo-gallery { display: flex; gap: 10px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
+        .photo-gallery img { flex: 1; width: 100%; min-width: 200px; border-radius: 8px; border: 2px solid #333; object-fit: cover; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        
         .no-photo-banner { background: #222; color: #666; padding: 20px; text-align: center; border-radius: 8px; border: 1px dashed #444; margin-bottom: 15px; font-size: 0.9rem; font-weight: bold; }
 
         .data-row { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding: 10px 0; }
         .data-label { color: #888; font-size: 0.8rem; text-transform: uppercase; }
-        .data-val { font-weight: bold; text-align: right; max-width: 60%; }
+        .data-val { font-weight: bold; text-align: right; max-width: 65%; color: #fff; }
         
         .manager-section { margin-top: 20px; background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; }
         .modal-notes { width: 100%; height: 80px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-top: 5px; font-family: inherit; resize: none; box-sizing: border-box; }
@@ -98,7 +102,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v3.0 Digital Twin</span></h1>
+            <h1>STRATA COMMAND <span>| v4.0 Digital Twin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -131,8 +135,10 @@
         
         <div class="view-controls">
             <span style="color:#888; font-weight:bold; font-size:0.9rem; margin-right: 10px;">MODE:</span>
-            <button class="view-toggle-btn active" id="btn-2d" onclick="switchView('2d')">2D SMART TABS</button>
-            <button class="view-toggle-btn" id="btn-3d" onclick="switchView('3d')">3D ORBIT ENGINE</button>
+            <button class="view-toggle-btn active" id="btn-2d" onclick="switchView('2d')">2D TABS</button>
+            <button class="view-toggle-btn" id="btn-3d" onclick="switchView('3d')">3D ORBIT</button>
+            <div style="flex:0.5;"></div>
+            <button class="view-toggle-btn" style="border:1px solid #555;" id="btn-stitch" onclick="toggleStitchMode()">🔗 STITCH WIDE WINDOWS</button>
         </div>
 
         <div class="stats-bar" id="stats-bar">
@@ -160,8 +166,7 @@
         </div>
 
         <div id="arena-3d">
-            <div id="world-3d">
-                </div>
+            <div id="world-3d"></div>
             <div style="position: absolute; bottom: 15px; right: 15px; color: #888; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 20px; display: flex; gap: 15px;">
                 <span>🖱️ Click & Drag to Spin</span>
                 <span style="color:#0cf;">🖱️ Scroll to Zoom</span>
@@ -175,13 +180,13 @@
             <h2 class="modal-title" id="m-id">A-12-L</h2>
             <div class="modal-subtitle" id="m-tech">Logged by Tech at 14:30</div>
             
-            <img id="m-img-preview" src="">
+            <div class="photo-gallery" id="m-photo-gallery"></div>
             <div id="m-no-photo" class="no-photo-banner">IMAGE NOT UPLOADED TO DASHBOARD</div>
             
             <div class="data-row"><span class="data-label">Findings</span><span class="data-val" id="m-finds" style="color:#f1c40f;">--</span></div>
             <div class="data-row"><span class="data-label">Moisture %</span><span class="data-val" id="m-moisture">--</span></div>
             <div class="data-row"><span class="data-label">Meter Proved</span><span class="data-val" id="m-proved">--</span></div>
-            <div class="data-row"><span class="data-label">FLIR Image</span><span class="data-val" id="m-flir" style="color:#0cf;">--</span></div>
+            <div class="data-row"><span class="data-label">FLIR Image(s)</span><span class="data-val" id="m-flir" style="color:#0cf;">--</span></div>
             
             <div class="manager-section">
                 <span class="data-label" style="color:#fff;">Management Notes</span>
@@ -196,7 +201,12 @@
     <script>
         let inspectionData = {};
         let projectInfo = "Unknown Project";
-        let activeNodeData = null; 
+        
+        // --- STITCH ENGINE & MODAL STATE ---
+        let activeNodeDataArray = []; // Now stores an array of data objects (1 or 2)
+        let isStitchMode = false;
+        let stitchSelection = [];
+        let stitchedPairs = []; // Example: [['A-12-R', 'B-12-L']]
         
         // --- IMAGE BANK ---
         let imageBank = {}; 
@@ -227,7 +237,6 @@
 
         async function handleFiles(files) {
             if (!files || files.length === 0) return;
-
             const csvPromises = [];
 
             for (let i = 0; i < files.length; i++) {
@@ -260,8 +269,7 @@
             
             if (document.getElementById('dashboard-screen').style.display === 'block') {
                 calculateBuildingGeometry();
-                if (currentMode === '2d') { renderTabs(); render2DGrid(); }
-                else { render3DArena(); }
+                refreshCurrentView();
             }
             fileInput.value = "";
         }
@@ -313,6 +321,57 @@
             }
         }
 
+        // --- STITCH ENGINE ---
+        function toggleStitchMode() {
+            isStitchMode = !isStitchMode;
+            document.getElementById('btn-stitch').classList.toggle('stitch-mode-on', isStitchMode);
+            stitchSelection = [];
+            if(isStitchMode) alert("STITCH MODE ACTIVE:\nClick the right half of the window, then click the left half. The system will merge them.");
+            refreshCurrentView();
+        }
+
+        function getNodeData(fullId) {
+            const parts = fullId.split('-');
+            if(inspectionData[parts[0]] && inspectionData[parts[0]][parts[1]]) {
+                return inspectionData[parts[0]][parts[1]][parts[2]];
+            }
+            return null;
+        }
+
+        function getCombinedStatus(id1, id2) {
+            let d1 = getNodeData(id1);
+            let d2 = getNodeData(id2);
+            if(!d1 || !d2) return 'status-clear';
+            if(d1.status === 'status-confirmed' || d2.status === 'status-confirmed') return 'status-confirmed';
+            if(d1.status === 'status-flagged' || d2.status === 'status-flagged') return 'status-flagged';
+            return 'status-clear';
+        }
+
+        function handleNodeClick(data, nodeElement) {
+            if(isStitchMode) {
+                // Prevent stitching a node that's already stitched
+                if (stitchedPairs.some(p => p.includes(data.id))) {
+                    alert("This window is already stitched!");
+                    return;
+                }
+                
+                stitchSelection.push(data.id);
+                nodeElement.classList.add('node-selected');
+                
+                if(stitchSelection.length === 2) {
+                    stitchSelection.sort(); // Alphabetical sorts A before B, perfectly establishing left/right
+                    stitchedPairs.push([...stitchSelection]);
+                    isStitchMode = false;
+                    document.getElementById('btn-stitch').classList.remove('stitch-mode-on');
+                    stitchSelection = [];
+                    refreshCurrentView();
+                }
+                return;
+            }
+            
+            openModal(data.id);
+        }
+
         // --- MAPPING (THE SORTING HAT) ---
         function openMappingScreen() {
             document.getElementById('btn-start-mapping').style.display = 'none';
@@ -362,19 +421,14 @@
             if(!elevations.includes(activeTab)) activeTab = elevations[0];
             
             calculateBuildingGeometry();
-            
-            if (currentMode === '2d') {
-                renderTabs();
-                render2DGrid();
-            } else {
-                render3DArena();
-            }
+            refreshCurrentView();
         }
 
         function calculateBuildingGeometry() {
             globalStats = { t:0, f:0, c:0 };
             const drops = Object.keys(inspectionData);
             
+            // Note: Stitched pairs count as 2 windows in the raw data stats
             drops.forEach(dropStr => {
                 const floors = Object.keys(inspectionData[dropStr]).map(Number);
                 floors.forEach(f => {
@@ -386,6 +440,16 @@
                     });
                 });
             });
+            
+            // Adjust stats so a flagged merged pair doesn't get double counted
+            stitchedPairs.forEach(pair => {
+                let d1 = getNodeData(pair[0]); let d2 = getNodeData(pair[1]);
+                if (d1 && d2) {
+                    if(d1.status === 'status-flagged' && d2.status === 'status-flagged') globalStats.f--;
+                    if(d1.status === 'status-confirmed' && d2.status === 'status-confirmed') globalStats.c--;
+                }
+            });
+            
             updateStatsUI();
         }
 
@@ -395,7 +459,6 @@
             document.getElementById('stat-confirmed').innerText = globalStats.c;
         }
 
-        // --- VIEW CONTROLLER ---
         function switchView(mode) {
             currentMode = mode;
             document.getElementById('btn-2d').classList.toggle('active', mode === '2d');
@@ -404,7 +467,11 @@
             document.getElementById('view-2d').style.display = (mode === '2d') ? 'block' : 'none';
             document.getElementById('arena-3d').style.display = (mode === '3d') ? 'flex' : 'none';
 
-            if(mode === '2d') {
+            refreshCurrentView();
+        }
+
+        function refreshCurrentView() {
+            if (currentMode === '2d') {
                 renderTabs();
                 render2DGrid();
             } else {
@@ -412,7 +479,7 @@
             }
         }
 
-        // --- GRID GENERATOR FACTORY (DYNAMIC PER FLOOR) ---
+        // --- GRID GENERATOR FACTORY ---
         function generateWallDOM(elevationName) {
             const fragment = document.createDocumentFragment();
             const activeDrops = Object.keys(inspectionData).filter(d => dropAssignments[d] === elevationName).sort();
@@ -448,26 +515,49 @@
                     winGroup.className = 'window-group';
 
                     if (inspectionData[dropStr][f]) {
-                        // Dynamically read ONLY the windows that exist on this specific floor
                         const order = { 'L': 1, 'C': 2, 'R': 3 };
                         const activeFloorPattern = Object.keys(inspectionData[dropStr][f]).sort((a, b) => order[a] - order[b]);
                         
                         activeFloorPattern.forEach(pos => {
                             const data = inspectionData[dropStr][f][pos];
                             const winNode = document.createElement('div');
-                            winNode.className = `window-node ${data.status}`;
-                            winNode.innerText = pos;
-                            winNode.onclick = () => openModal(data);
                             
-                            // Visual indicator if a photo is successfully linked!
-                            if (imageBank[data.flir]) {
-                                winNode.style.border = "2px solid #fff";
+                            // MERGE ENGINE VISUAL LOGIC
+                            let isStitchedLeft = false;
+                            let isStitchedRight = false;
+                            let finalStatus = data.status;
+
+                            let pair = stitchedPairs.find(p => p.includes(data.id));
+                            if (pair) {
+                                finalStatus = getCombinedStatus(pair[0], pair[1]);
+                                if (pair[0] === data.id) isStitchedLeft = true;
+                                if (pair[1] === data.id) isStitchedRight = true;
+                            }
+
+                            winNode.className = `window-node ${finalStatus}`;
+                            winNode.innerText = pos;
+                            winNode.onclick = () => handleNodeClick(data, winNode);
+                            
+                            if (imageBank[data.flir]) winNode.style.border = "2px solid #fff";
+
+                            // THE VISUAL BRIDGE (CSS MAGIC)
+                            if (isStitchedLeft) {
+                                let shadowColor = finalStatus === 'status-confirmed' ? '#d9534f' : finalStatus === 'status-flagged' ? '#f1c40f' : '#28a745';
+                                winNode.style.boxShadow = `15px 0 0 ${shadowColor}`;
+                                winNode.style.zIndex = '5';
+                                winNode.style.borderTopRightRadius = '0';
+                                winNode.style.borderBottomRightRadius = '0';
+                                if (imageBank[data.flir]) winNode.style.borderRight = "none";
+                            }
+                            if (isStitchedRight) {
+                                winNode.style.borderTopLeftRadius = '0';
+                                winNode.style.borderBottomLeftRadius = '0';
+                                if (imageBank[data.flir]) winNode.style.borderLeft = "none";
                             }
                             
                             winGroup.appendChild(winNode);
                         });
                     } else {
-                        // If the entire floor was skipped in the drop, output a blank void block
                         const winNode = document.createElement('div');
                         winNode.className = `window-node status-void`;
                         winGroup.appendChild(winNode);
@@ -481,7 +571,6 @@
             return fragment;
         }
 
-        // --- 2D ENGINE LOGIC ---
         function renderTabs() {
             const container = document.getElementById('tabs-container');
             container.innerHTML = "";
@@ -496,7 +585,6 @@
                     container.appendChild(tab);
                 }
             });
-            
             if(!usedElevations.has(activeTab) && usedElevations.size > 0) {
                 activeTab = Array.from(usedElevations)[0];
                 renderTabs();
@@ -510,7 +598,6 @@
             container.appendChild(generateWallDOM(activeTab));
         }
 
-        // --- 3D ENGINE LOGIC ---
         function render3DArena() {
             const world = document.getElementById('world-3d');
             world.innerHTML = '';
@@ -520,7 +607,6 @@
             const numWalls = usedElevations.length;
             
             if (numWalls === 0) return;
-
             const angleStep = 360 / numWalls;
             const radius = numWalls === 1 ? 0 : Math.max(300, numWalls * 120);
 
@@ -528,9 +614,7 @@
                 const wallDiv = document.createElement('div');
                 wallDiv.className = 'wall-3d';
                 wallDiv.innerHTML = `<div class="wall-title-3d">${elev}</div>`;
-                
                 wallDiv.appendChild(generateWallDOM(elev));
-                
                 wallDiv.style.transform = `rotateY(${index * angleStep}deg) translateZ(${radius}px)`;
                 world.appendChild(wallDiv);
             });
@@ -546,39 +630,24 @@
             }
         });
 
-        arena.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-        });
-        
+        arena.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; });
         window.addEventListener('mousemove', (e) => {
             if (isDragging && currentMode === '3d') {
-                const deltaX = e.clientX - previousMousePosition.x;
-                const deltaY = e.clientY - previousMousePosition.y;
-                
-                rotationY += deltaX * 0.4; 
-                rotationX -= deltaY * 0.4; 
-                
+                rotationY += (e.clientX - previousMousePosition.x) * 0.4; 
+                rotationX -= (e.clientY - previousMousePosition.y) * 0.4; 
                 if(rotationX > 45) rotationX = 45;
                 if(rotationX < -45) rotationX = -45;
-
                 document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
                 previousMousePosition = { x: e.clientX, y: e.clientY };
             }
         });
-        
         window.addEventListener('mouseup', () => { isDragging = false; });
         
-        arena.addEventListener('touchstart', (e) => {
-            isDragging = true;
-            previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        });
+        arena.addEventListener('touchstart', (e) => { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; });
         window.addEventListener('touchmove', (e) => {
             if (isDragging && currentMode === '3d') {
-                const deltaX = e.touches[0].clientX - previousMousePosition.x;
-                const deltaY = e.touches[0].clientY - previousMousePosition.y;
-                rotationY += deltaX * 0.5;
-                rotationX -= deltaY * 0.5;
+                rotationY += (e.touches[0].clientX - previousMousePosition.x) * 0.5;
+                rotationX -= (e.touches[0].clientY - previousMousePosition.y) * 0.5;
                 if(rotationX > 45) rotationX = 45;
                 if(rotationX < -45) rotationX = -45;
                 document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
@@ -587,61 +656,93 @@
         });
         window.addEventListener('touchend', () => { isDragging = false; });
 
-
-        // --- MODAL & IMAGE LINKER LOGIC ---
-        function openModal(data) {
-            activeNodeData = data; 
-            document.getElementById('m-id').innerText = data.id;
-            document.getElementById('m-tech').innerText = `Logged by ${data.tech} at ${data.time}`;
-            document.getElementById('m-finds').innerText = data.finds;
-            document.getElementById('m-moisture').innerText = data.mPct;
-            document.getElementById('m-proved').innerText = data.proved;
-            document.getElementById('m-flir').innerText = data.flir;
-            document.getElementById('m-notes').value = data.notes;
+        // --- AGGREGATING MODAL LOGIC ---
+        function openModal(nodeId) {
+            let pair = stitchedPairs.find(p => p.includes(nodeId));
+            activeNodeDataArray = [];
             
-            const imgEl = document.getElementById('m-img-preview');
-            const noImgEl = document.getElementById('m-no-photo');
-            
-            if (imageBank[data.flir]) {
-                imgEl.src = imageBank[data.flir];
-                imgEl.style.display = 'block';
-                noImgEl.style.display = 'none';
+            if (pair) {
+                activeNodeDataArray.push(getNodeData(pair[0]));
+                activeNodeDataArray.push(getNodeData(pair[1]));
             } else {
-                imgEl.src = "";
-                imgEl.style.display = 'none';
-                noImgEl.style.display = 'block';
+                activeNodeDataArray.push(getNodeData(nodeId));
             }
+
+            // Aggregate Data
+            let ids = activeNodeDataArray.map(d => d.id).join(' + ');
+            let techs = [...new Set(activeNodeDataArray.map(d => d.tech))].join(', ');
             
-            document.getElementById('btn-confirm-issue').style.display = (data.status === 'status-flagged') ? 'block' : 'none';
+            let allFinds = [];
+            activeNodeDataArray.forEach(d => allFinds.push(...d.finds.split(' | ')));
+            allFinds = [...new Set(allFinds)].filter(f => f !== 'CLEAR' && f !== '');
+            if(allFinds.length === 0) allFinds = ['CLEAR'];
+
+            let mPcts = activeNodeDataArray.map(d => d.mPct).filter(m => m !== '--').join(' & ') || '--';
+            let proved = activeNodeDataArray.some(d => d.proved === 'YES') ? 'YES' : 'NO';
+            let flirs = activeNodeDataArray.map(d => d.flir).filter(f => f !== '--');
+            
+            let notes = activeNodeDataArray.map(d => d.notes).filter(n => n.trim() !== '').join('\n');
+
+            document.getElementById('m-id').innerText = ids;
+            document.getElementById('m-tech').innerText = `Logged by: ${techs}`;
+            document.getElementById('m-finds').innerText = allFinds.join(' | ');
+            document.getElementById('m-finds').style.color = allFinds.includes('CLEAR') ? '#28a745' : '#f1c40f';
+            
+            document.getElementById('m-moisture').innerText = mPcts;
+            document.getElementById('m-proved').innerText = proved;
+            document.getElementById('m-flir').innerText = flirs.join(' & ') || '--';
+            document.getElementById('m-notes').value = notes;
+            
+            // THE IMAGE LINKER GALLERY
+            const gallery = document.getElementById('m-photo-gallery');
+            const noPhoto = document.getElementById('m-no-photo');
+            gallery.innerHTML = '';
+            let hasPhoto = false;
+
+            flirs.forEach(f => {
+                if(imageBank[f]) {
+                    hasPhoto = true;
+                    let img = document.createElement('img');
+                    img.src = imageBank[f];
+                    gallery.appendChild(img);
+                }
+            });
+
+            gallery.style.display = hasPhoto ? 'flex' : 'none';
+            noPhoto.style.display = hasPhoto ? 'none' : 'block';
+            
+            let overallStatus = activeNodeDataArray.some(d => d.status === 'status-flagged') ? 'status-flagged' : 'status-clear';
+            document.getElementById('btn-confirm-issue').style.display = (overallStatus === 'status-flagged') ? 'block' : 'none';
+            
             document.getElementById('info-modal').style.display = 'flex';
         }
 
         function confirmIssue() {
-            if (activeNodeData) {
-                activeNodeData.notes = document.getElementById('m-notes').value;
-                activeNodeData.status = 'status-confirmed'; 
+            if (activeNodeDataArray.length > 0) {
+                let note = document.getElementById('m-notes').value;
+                activeNodeDataArray.forEach(d => {
+                    d.notes = note;
+                    d.status = 'status-confirmed'; 
+                });
                 refreshCurrentView();
                 closeModal();
             }
         }
 
         function saveNotesOnly() {
-            if (activeNodeData) {
-                activeNodeData.notes = document.getElementById('m-notes').value;
+            if (activeNodeDataArray.length > 0) {
+                let note = document.getElementById('m-notes').value;
+                activeNodeDataArray.forEach(d => {
+                    d.notes = note;
+                });
                 refreshCurrentView();
                 closeModal();
             }
         }
-        
-        function refreshCurrentView() {
-            calculateBuildingGeometry();
-            if (currentMode === '2d') render2DGrid();
-            else render3DArena();
-        }
 
         function closeModal() {
             document.getElementById('info-modal').style.display = 'none';
-            activeNodeData = null;
+            activeNodeDataArray = [];
         }
 
         // --- UTILITIES ---
@@ -649,6 +750,7 @@
             if(confirm("Are you sure you want to clear all data and start over?")) {
                 inspectionData = {};
                 imageBank = {};
+                stitchedPairs = [];
                 linkedPhotosCount = 0;
                 projectInfo = "Unknown Project";
                 elevations = ["Main Elevation"];
@@ -676,7 +778,6 @@
                 const wall = dropAssignments[dropStr];
                 const floors = Object.keys(inspectionData[dropStr]).sort((a,b) => b-a); 
                 floors.forEach(f => {
-                    // Update CSV generator to read dynamically per floor as well
                     const order = { 'L': 1, 'C': 2, 'R': 3 };
                     const activeFloorPattern = Object.keys(inspectionData[dropStr][f]).sort((a, b) => order[a] - order[b]);
                     
