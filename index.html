@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v4.3 Digital Twin</title>
+    <title>Strata Command Center | v4.4 Digital Twin</title>
     <style>
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f111a; color: #fff; margin: 0; padding: 20px; overflow-x: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0cf; padding-bottom: 15px; margin-bottom: 20px; }
@@ -41,7 +41,7 @@
         .stat-label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
         .stat-value { font-size: 2rem; font-weight: 900; margin-top: 5px; }
 
-        /* --- 2D GRID STYLES (UPDATED FOR TIGHTER SPACING) --- */
+        /* --- 2D GRID STYLES --- */
         #building-container-2d { display: flex; gap: 2px; overflow-x: auto; padding-bottom: 20px; align-items: flex-end; }
         .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 6px; padding: 5px 2px; display: flex; flex-direction: column; min-width: max-content; }
         .drop-header { text-align: center; font-size: 1rem; font-weight: bold; color: #0cf; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 5px; }
@@ -60,7 +60,7 @@
         .status-empty { background: #222; border: 2px dashed #444; color: #555; pointer-events: none; }
         .status-void { background: transparent; border: 2px solid transparent; cursor: default; pointer-events: none; }
 
-        /* --- 3D ARENA STYLES (UPDATED FOR TIGHTER SPACING) --- */
+        /* --- 3D ARENA STYLES --- */
         #arena-3d { display: none; perspective: 1500px; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #1a1d27 0%, #0f111a 100%); border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; align-items: center; justify-content: center; margin-bottom: 20px; }
         #arena-3d:active { cursor: grabbing; }
         #world-3d { transform-style: preserve-3d; transition: transform 0.1s ease-out; display: flex; align-items: center; justify-content: center; }
@@ -102,7 +102,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v4.3 Digital Twin</span></h1>
+            <h1>STRATA COMMAND <span>| v4.4 Digital Twin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -429,7 +429,6 @@
             drops.forEach(dropStr => {
                 const floors = Object.keys(inspectionData[dropStr]).map(Number);
                 floors.forEach(f => {
-                    // Update global highest and lowest floors
                     if (f > globalStats.maxFloor) globalStats.maxFloor = f;
                     if (f < globalStats.minFloor) globalStats.minFloor = f;
 
@@ -485,7 +484,6 @@
         }
 
         // --- GRID GENERATOR FACTORY ---
-        // Added parameter: useGlobalFloors (Forces 3D walls to all be identical height)
         function generateWallDOM(elevationName, useGlobalFloors = false) {
             const fragment = document.createDocumentFragment();
             const activeDrops = Object.keys(inspectionData).filter(d => dropAssignments[d] === elevationName).sort();
@@ -567,7 +565,6 @@
                             winGroup.appendChild(winNode);
                         });
                     } else {
-                        // INVISIBLE SPACER: Propping up the short walls in 3D Mode
                         const winNode = document.createElement('div');
                         winNode.className = `window-node status-void`;
                         winGroup.appendChild(winNode);
@@ -605,7 +602,6 @@
         function render2DGrid() {
             const container = document.getElementById('building-container-2d');
             container.innerHTML = '';
-            // Pass false so 2D mode stays compact and doesn't render empty vertical space
             container.appendChild(generateWallDOM(activeTab, false));
         }
 
@@ -627,16 +623,18 @@
                 if(dropsOnThisWall > maxDropsOnAWall) maxDropsOnAWall = dropsOnThisWall;
             });
             
-            const estimatedMaxWidth = Math.max(300, (maxDropsOnAWall * 170) + 100);
+            // MATH ENGINE FIX: Exact pixel width based on tight CSS (148px per col + minimal padding)
+            const exactMaxWidth = (maxDropsOnAWall * 148) + 16; 
 
             let radius = 0;
             if (numWalls === 1) {
                 radius = 0;
             } else if (numWalls === 2) {
-                radius = estimatedMaxWidth / 2 + 50; 
+                radius = exactMaxWidth / 2; // Perfectly back to back
             } else {
-                radius = (estimatedMaxWidth / 2) / Math.tan(Math.PI / numWalls);
-                radius += 100; 
+                // Pure trigonometry, no artificial buffers. Corners snap tightly together.
+                radius = (exactMaxWidth / 2) / Math.tan(Math.PI / numWalls);
+                radius -= 2; // Tiny inward nudge to ensure overlap instead of a 1px gap
             }
 
             usedElevations.forEach((elev, index) => {
@@ -644,7 +642,6 @@
                 wallDiv.className = 'wall-3d';
                 wallDiv.innerHTML = `<div class="wall-title-3d">${elev}</div>`;
                 
-                // Pass true to force global height alignment in 3D Space
                 wallDiv.appendChild(generateWallDOM(elev, true));
                 
                 wallDiv.style.transform = `rotateY(${index * angleStep}deg) translateZ(${radius}px)`;
