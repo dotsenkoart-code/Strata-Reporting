@@ -46,8 +46,9 @@
         .floor-row { display: flex; align-items: center; margin-bottom: 4px; }
         .floor-label { width: 35px; font-weight: bold; color: #666; font-size: 0.85rem; text-align: right; margin-right: 8px; }
         
-        .window-group { display: flex; gap: 4px; flex: 1; justify-content: center; }
-        .window-node { width: 40px; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; }
+        /* UPDATED: Flex-based Dynamic Columns */
+        .window-group { display: flex; gap: 4px; flex: 1; justify-content: center; width: 140px; } 
+        .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; }
         .window-node:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 10; }
         
         /* Workflow Colors */
@@ -58,7 +59,8 @@
         .status-void { background: transparent; border: 2px solid transparent; cursor: default; pointer-events: none; }
 
         /* --- 3D ARENA STYLES --- */
-        #arena-3d { display: none; perspective: 1500px; width: 100%; height: 700px; background: radial-gradient(circle, #1a1d27 0%, #0f111a 100%); border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; align-items: center; justify-content: center; margin-bottom: 20px; }
+        /* UPDATED: Much larger viewing area */
+        #arena-3d { display: none; perspective: 1500px; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #1a1d27 0%, #0f111a 100%); border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; align-items: center; justify-content: center; margin-bottom: 20px; }
         #arena-3d:active { cursor: grabbing; }
         #world-3d { transform-style: preserve-3d; transition: transform 0.1s ease-out; display: flex; align-items: center; justify-content: center; }
         .wall-3d { position: absolute; transform-style: preserve-3d; background: rgba(15, 17, 26, 0.8); border: 2px solid #333; padding: 20px; border-radius: 12px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; gap: 15px; align-items: flex-end; }
@@ -161,8 +163,9 @@
         <div id="arena-3d">
             <div id="world-3d">
                 </div>
-            <div style="position: absolute; bottom: 15px; right: 15px; color: #888; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 20px;">
-                🖱️ Click & Drag to Spin
+            <div style="position: absolute; bottom: 15px; right: 15px; color: #888; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 20px; display: flex; gap: 15px;">
+                <span>🖱️ Click & Drag to Spin</span>
+                <span style="color:#0cf;">🖱️ Scroll to Zoom</span>
             </div>
         </div>
 
@@ -213,6 +216,9 @@
         let previousMousePosition = { x: 0, y: 0 };
         let rotationY = -30; // Starting angle
         let rotationX = 5;   // Looking slightly down
+        
+        // UPDATED: Global Zoom variable
+        let zoomZ = -400; // Start slightly zoomed out
 
         // --- DRAG AND DROP LOGIC (UPGRADED FOR IMAGES) ---
         const dropZone = document.getElementById('drop-zone');
@@ -531,7 +537,8 @@
         function render3DArena() {
             const world = document.getElementById('world-3d');
             world.innerHTML = '';
-            world.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+            // UPDATED: Now includes ZoomZ logic
+            world.style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
 
             const usedElevations = Array.from(new Set(Object.values(dropAssignments)));
             const numWalls = usedElevations.length;
@@ -559,6 +566,16 @@
 
         // 3D Mouse Controls
         const arena = document.getElementById('arena-3d');
+        
+        // UPDATED: Scroll to Zoom event listener
+        arena.addEventListener('wheel', (e) => {
+            if(currentMode === '3d') {
+                e.preventDefault();
+                zoomZ -= e.deltaY * 2; // Adjust scroll speed here
+                document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+            }
+        });
+
         arena.addEventListener('mousedown', (e) => {
             isDragging = true;
             previousMousePosition = { x: e.clientX, y: e.clientY };
@@ -576,7 +593,8 @@
                 if(rotationX > 45) rotationX = 45;
                 if(rotationX < -45) rotationX = -45;
 
-                document.getElementById('world-3d').style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+                // UPDATED: Now includes ZoomZ logic
+                document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
                 previousMousePosition = { x: e.clientX, y: e.clientY };
             }
         });
@@ -596,7 +614,7 @@
                 rotationX -= deltaY * 0.5;
                 if(rotationX > 45) rotationX = 45;
                 if(rotationX < -45) rotationX = -45;
-                document.getElementById('world-3d').style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+                document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
                 previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
             }
         });
