@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v4.0 Digital Twin</title>
+    <title>Strata Command Center | v4.1 Digital Twin</title>
     <style>
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f111a; color: #fff; margin: 0; padding: 20px; overflow-x: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0cf; padding-bottom: 15px; margin-bottom: 20px; }
@@ -102,7 +102,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v4.0 Digital Twin</span></h1>
+            <h1>STRATA COMMAND <span>| v4.1 Digital Twin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -203,10 +203,10 @@
         let projectInfo = "Unknown Project";
         
         // --- STITCH ENGINE & MODAL STATE ---
-        let activeNodeDataArray = []; // Now stores an array of data objects (1 or 2)
+        let activeNodeDataArray = []; 
         let isStitchMode = false;
         let stitchSelection = [];
-        let stitchedPairs = []; // Example: [['A-12-R', 'B-12-L']]
+        let stitchedPairs = []; 
         
         // --- IMAGE BANK ---
         let imageBank = {}; 
@@ -349,7 +349,6 @@
 
         function handleNodeClick(data, nodeElement) {
             if(isStitchMode) {
-                // Prevent stitching a node that's already stitched
                 if (stitchedPairs.some(p => p.includes(data.id))) {
                     alert("This window is already stitched!");
                     return;
@@ -359,7 +358,7 @@
                 nodeElement.classList.add('node-selected');
                 
                 if(stitchSelection.length === 2) {
-                    stitchSelection.sort(); // Alphabetical sorts A before B, perfectly establishing left/right
+                    stitchSelection.sort(); 
                     stitchedPairs.push([...stitchSelection]);
                     isStitchMode = false;
                     document.getElementById('btn-stitch').classList.remove('stitch-mode-on');
@@ -368,7 +367,6 @@
                 }
                 return;
             }
-            
             openModal(data.id);
         }
 
@@ -428,7 +426,6 @@
             globalStats = { t:0, f:0, c:0 };
             const drops = Object.keys(inspectionData);
             
-            // Note: Stitched pairs count as 2 windows in the raw data stats
             drops.forEach(dropStr => {
                 const floors = Object.keys(inspectionData[dropStr]).map(Number);
                 floors.forEach(f => {
@@ -441,7 +438,6 @@
                 });
             });
             
-            // Adjust stats so a flagged merged pair doesn't get double counted
             stitchedPairs.forEach(pair => {
                 let d1 = getNodeData(pair[0]); let d2 = getNodeData(pair[1]);
                 if (d1 && d2) {
@@ -522,7 +518,6 @@
                             const data = inspectionData[dropStr][f][pos];
                             const winNode = document.createElement('div');
                             
-                            // MERGE ENGINE VISUAL LOGIC
                             let isStitchedLeft = false;
                             let isStitchedRight = false;
                             let finalStatus = data.status;
@@ -540,7 +535,6 @@
                             
                             if (imageBank[data.flir]) winNode.style.border = "2px solid #fff";
 
-                            // THE VISUAL BRIDGE (CSS MAGIC)
                             if (isStitchedLeft) {
                                 let shadowColor = finalStatus === 'status-confirmed' ? '#d9534f' : finalStatus === 'status-flagged' ? '#f1c40f' : '#28a745';
                                 winNode.style.boxShadow = `15px 0 0 ${shadowColor}`;
@@ -598,6 +592,7 @@
             container.appendChild(generateWallDOM(activeTab));
         }
 
+        // --- UPDATED 3D ARENA MATH ENGINE ---
         function render3DArena() {
             const world = document.getElementById('world-3d');
             world.innerHTML = '';
@@ -608,7 +603,27 @@
             
             if (numWalls === 0) return;
             const angleStep = 360 / numWalls;
-            const radius = numWalls === 1 ? 0 : Math.max(300, numWalls * 120);
+            
+            // MATH ENGINE: Calculate max width of walls dynamically to prevent corner clipping
+            let maxDropsOnAWall = 0;
+            usedElevations.forEach(elev => {
+                const dropsOnThisWall = Object.keys(inspectionData).filter(d => dropAssignments[d] === elev).length;
+                if(dropsOnThisWall > maxDropsOnAWall) maxDropsOnAWall = dropsOnThisWall;
+            });
+            
+            // Approx 170px width per drop + 100px wall padding
+            const estimatedMaxWidth = Math.max(300, (maxDropsOnAWall * 170) + 100);
+
+            let radius = 0;
+            if (numWalls === 1) {
+                radius = 0;
+            } else if (numWalls === 2) {
+                radius = estimatedMaxWidth / 2 + 50; // Push apart back-to-back
+            } else {
+                // Polygon radius math: (Width / 2) / Tangent( 180 / Number of Sides )
+                radius = (estimatedMaxWidth / 2) / Math.tan(Math.PI / numWalls);
+                radius += 100; // Extra safety buffer
+            }
 
             usedElevations.forEach((elev, index) => {
                 const wallDiv = document.createElement('div');
@@ -628,7 +643,7 @@
                 zoomZ -= e.deltaY * 2; 
                 document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
             }
-        });
+        }, { passive: false }); // added passive false to ensure scroll blocks on the body
 
         arena.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; });
         window.addEventListener('mousemove', (e) => {
@@ -643,7 +658,7 @@
         });
         window.addEventListener('mouseup', () => { isDragging = false; });
         
-        arena.addEventListener('touchstart', (e) => { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; });
+        arena.addEventListener('touchstart', (e) => { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }, {passive: true});
         window.addEventListener('touchmove', (e) => {
             if (isDragging && currentMode === '3d') {
                 rotationY += (e.touches[0].clientX - previousMousePosition.x) * 0.5;
@@ -653,7 +668,7 @@
                 document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
                 previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
             }
-        });
+        }, {passive: true});
         window.addEventListener('touchend', () => { isDragging = false; });
 
         // --- AGGREGATING MODAL LOGIC ---
