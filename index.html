@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v4.2 Digital Twin</title>
+    <title>Strata Command Center | v4.5 Digital Twin</title>
     <style>
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f111a; color: #fff; margin: 0; padding: 20px; overflow-x: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0cf; padding-bottom: 15px; margin-bottom: 20px; }
@@ -85,6 +85,12 @@
         .manager-section { margin-top: 20px; background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; }
         .modal-notes { width: 100%; height: 80px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-top: 5px; font-family: inherit; resize: none; box-sizing: border-box; }
         
+        /* NEW STATUS BUTTONS */
+        .status-btns { display: flex; gap: 10px; margin-top: 15px; margin-bottom: 15px; }
+        .btn-status { flex: 1; padding: 10px; font-size: 0.8rem; border-radius: 4px; }
+        .btn-status-yellow { background: #f1c40f; color: #000; }
+        .btn-status-yellow:hover { background: #e2b607; }
+
         .btn { padding: 12px 20px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
         .btn-blue { background: #0cf; color: #000; }
         .btn-blue:hover { background: #00aadd; }
@@ -102,7 +108,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v4.2 Digital Twin</span></h1>
+            <h1>STRATA COMMAND <span>| v4.5 Digital Twin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -183,7 +189,7 @@
             <div class="photo-gallery" id="m-photo-gallery"></div>
             <div id="m-no-photo" class="no-photo-banner">IMAGE NOT UPLOADED TO DASHBOARD</div>
             
-            <div class="data-row"><span class="data-label">Findings</span><span class="data-val" id="m-finds" style="color:#f1c40f;">--</span></div>
+            <div class="data-row"><span class="data-label">Field Findings</span><span class="data-val" id="m-finds" style="color:#f1c40f;">--</span></div>
             <div class="data-row"><span class="data-label">Moisture %</span><span class="data-val" id="m-moisture">--</span></div>
             <div class="data-row"><span class="data-label">Meter Proved</span><span class="data-val" id="m-proved">--</span></div>
             <div class="data-row"><span class="data-label">FLIR Image(s)</span><span class="data-val" id="m-flir" style="color:#0cf;">--</span></div>
@@ -191,7 +197,16 @@
             <div class="manager-section">
                 <span class="data-label" style="color:#fff;">Management Notes</span>
                 <textarea id="m-notes" class="modal-notes" placeholder="e.g. Schedule sealant replacement..."></textarea>
-                <button id="btn-confirm-issue" class="btn btn-red btn-block" onclick="confirmIssue()">🚨 CONFIRM ISSUE</button>
+                
+                <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
+                    <span class="data-label" style="color:#888;">Office Override: Status</span>
+                    <div class="status-btns">
+                        <button class="btn btn-status btn-green" onclick="changeStatus('status-clear')">✅ MARK CLEAR</button>
+                        <button class="btn btn-status btn-status-yellow" onclick="changeStatus('status-flagged')">⚠️ FLAG (REVIEW)</button>
+                        <button class="btn btn-status btn-red" onclick="changeStatus('status-confirmed')">🚨 CONFIRM DEFECT</button>
+                    </div>
+                </div>
+
             </div>
             
             <button class="btn btn-dark btn-block" onclick="saveNotesOnly()">💾 SAVE NOTES & CLOSE</button>
@@ -307,6 +322,9 @@
                         if(inspectionData[drop][floor][pos]) {
                             existingNotes = inspectionData[drop][floor][pos].notes;
                             if(inspectionData[drop][floor][pos].status === 'status-confirmed') existingStatus = 'status-confirmed';
+                            // Also preserve overriding manual clears/flags
+                            if(inspectionData[drop][floor][pos].status === 'status-clear') existingStatus = 'status-clear';
+                            if(inspectionData[drop][floor][pos].status === 'status-flagged') existingStatus = 'status-flagged';
                         }
 
                         inspectionData[drop][floor][pos] = {
@@ -738,18 +756,16 @@
             gallery.style.display = hasPhoto ? 'flex' : 'none';
             noPhoto.style.display = hasPhoto ? 'none' : 'block';
             
-            let overallStatus = activeNodeDataArray.some(d => d.status === 'status-flagged') ? 'status-flagged' : 'status-clear';
-            document.getElementById('btn-confirm-issue').style.display = (overallStatus === 'status-flagged') ? 'block' : 'none';
-            
             document.getElementById('info-modal').style.display = 'flex';
         }
 
-        function confirmIssue() {
+        // NEW: MASTER STATUS OVERRIDE FUNCTION
+        function changeStatus(newStatus) {
             if (activeNodeDataArray.length > 0) {
                 let note = document.getElementById('m-notes').value;
                 activeNodeDataArray.forEach(d => {
-                    d.notes = note;
-                    d.status = 'status-confirmed'; 
+                    d.notes = note; // Save the note
+                    d.status = newStatus; // Force the new status
                 });
                 refreshCurrentView();
                 closeModal();
