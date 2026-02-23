@@ -1,7 +1,8 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v6.0 Fullscreen & QoL</title>
+    <title>Strata Command Center | v6.1 Pro Fullscreen</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
@@ -35,8 +36,9 @@
         #btn-true3d { background: #2b113d; color: #d080ff; border: 1px solid #5a2e7a; }
         #btn-true3d.active { background: #b055ff; color: #fff; }
 
-        .stitch-mode-on { border-color: #f39c12 !important; background: rgba(243, 156, 18, 0.2) !important; color: #f39c12 !important; box-shadow: 0 0 10px rgba(243, 156, 18, 0.5); }
-        .tag-mode-on { border-color: #d080ff !important; background: rgba(176, 85, 255, 0.2) !important; color: #fff !important; box-shadow: 0 0 15px rgba(176, 85, 255, 0.6) !important; }
+        /* TOOL TOGGLE STATES */
+        .stitch-mode-on { border-color: #f39c12 !important; background: rgba(243, 156, 18, 0.4) !important; color: #fff !important; box-shadow: 0 0 15px rgba(243, 156, 18, 0.8) !important; }
+        .tag-mode-on { border-color: #d080ff !important; background: rgba(176, 85, 255, 0.4) !important; color: #fff !important; box-shadow: 0 0 15px rgba(176, 85, 255, 0.8) !important; }
         .node-selected { border-color: #0cf !important; transform: scale(1.1); box-shadow: 0 0 15px #0cf !important; z-index: 20 !important; }
 
         .tabs-container { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; border-bottom: 2px solid #333; margin-bottom: 20px; }
@@ -52,10 +54,13 @@
         /* --- 2D GRID STYLES --- */
         #building-container-2d { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 20px; align-items: flex-end; }
         .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-width: max-content; }
-        .drop-header { text-align: center; font-size: 1.2rem; font-weight: bold; color: #0cf; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        
+        /* ALIGNMENT FIX: STRICT HEIGHT & FLEXBOX ON HEADERS */
+        .drop-header { text-align: center; font-size: 1.2rem; font-weight: bold; color: #0cf; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; height: 24px; display: flex; align-items: center; justify-content: center; box-sizing: content-box; }
         
         .floor-axis-column { background: transparent; border: none; padding-right: 0; padding-left: 0; min-width: auto; margin-right: -5px; }
         .floor-axis-header { color: transparent; border-bottom-color: transparent; }
+        
         .floor-row { display: flex; align-items: center; margin-bottom: 4px; }
         .floor-label { width: 35px; font-weight: bold; color: #888; font-size: 0.9rem; text-align: right; margin-right: 10px; height: 50px; display: flex; align-items: center; justify-content: flex-end; }
         
@@ -70,53 +75,31 @@
         .status-empty { background: #222; border: 2px dashed #444; color: #555; pointer-events: none; }
         .status-void { background: transparent; border: 2px solid transparent; cursor: default; pointer-events: none; }
 
-        /* --- CSS 3D ARENA STYLES --- */
+        /* --- 3D ARENAS & FULLSCREEN UI --- */
         #arena-3d { display: none; perspective: 1500px; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #1a1d27 0%, #0f111a 100%); border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; align-items: center; justify-content: center; margin-bottom: 20px; }
         #arena-3d:active { cursor: grabbing; }
         #world-3d { transform-style: preserve-3d; transition: transform 0.1s ease-out; display: flex; align-items: center; justify-content: center; }
         .wall-3d { position: absolute; transform-style: preserve-3d; background: rgba(15, 17, 26, 0.8); border: 2px solid #333; padding: 20px; border-radius: 12px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; gap: 15px; align-items: flex-end; }
         .wall-title-3d { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); color: #0cf; font-size: 1.5rem; font-weight: 900; white-space: nowrap; text-shadow: 0 5px 10px rgba(0,0,0,0.8); }
 
-        /* --- TRUE 3D TWIN VIEWER --- */
         #arena-true3d { display: none; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #2a2d38 0%, #0f111a 100%); border: 1px solid #5a2e7a; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 20px; box-shadow: 0 0 30px rgba(176, 85, 255, 0.2); }
         model-viewer { width: 100%; height: 100%; outline: none; }
         
+        /* FLOATING FULLSCREEN TOOLS */
+        .btn-fullscreen { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.7); color: #fff; border: 1px solid #555; z-index: 100; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
+        .btn-fullscreen:hover { border-color: #fff; background: #000; }
+        
+        .floating-tools { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 100; }
+        .float-btn { padding: 15px 30px; font-weight: bold; border-radius: 30px; border: 2px solid #555; cursor: pointer; background: rgba(0,0,0,0.8); color: #fff; transition: 0.2s; box-shadow: 0 10px 25px rgba(0,0,0,0.8); backdrop-filter: blur(5px); font-size: 1rem; }
+        .float-btn:hover { border-color: #0cf; }
+
         /* 3D PIN HOTSPOTS */
-        .hotspot-dot { 
-            width: 18px; 
-            height: 18px; 
-            border-radius: 50%; 
-            border: 3px solid #fff; 
-            box-shadow: 0 0 15px rgba(0,0,0,0.8); 
-            cursor: pointer; 
-            padding: 0; 
-            margin: 0; 
-            transform: translate(-50%, -50%); 
-            transition: all 0.2s ease-in-out;
-        }
-        .hotspot-dot:hover { 
-            transform: translate(-50%, -50%) scale(1.5); 
-            z-index: 100; 
-        }
+        .hotspot-dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.8); cursor: pointer; padding: 0; margin: 0; transform: translate(-50%, -50%); transition: all 0.2s ease-in-out; }
+        .hotspot-dot:hover { transform: translate(-50%, -50%) scale(1.5); z-index: 100; }
         .hotspot-dot.status-clear { background: #28a745; box-shadow: 0 0 15px #28a745; }
         .hotspot-dot.status-flagged { background: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
         .hotspot-dot.status-confirmed { background: #d9534f; box-shadow: 0 0 15px #d9534f; }
-        
-        .hotspot-label { 
-            position: absolute; 
-            background: rgba(0,0,0,0.8); 
-            color: #fff; 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            font-size: 0.7rem; 
-            font-weight: bold; 
-            top: -30px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            white-space: nowrap; 
-            pointer-events: none; 
-            border: 1px solid #555; 
-        }
+        .hotspot-label { position: absolute; background: rgba(0,0,0,0.8); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; top: -30px; left: 50%; transform: translateX(-50%); white-space: nowrap; pointer-events: none; border: 1px solid #555; }
 
         /* --- MODALS --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(3px); }
@@ -158,7 +141,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v6.0 Fullscreen & QoL</span></h1>
+            <h1>STRATA COMMAND <span>| v6.1 Pro Fullscreen</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -196,8 +179,8 @@
             <button class="view-toggle-btn" id="btn-3d" onclick="switchView('3d')">CSS 3D ORBIT</button>
             <button class="view-toggle-btn" id="btn-true3d" onclick="switchView('true3d')">✨ TRUE 3D TWIN</button>
             <div style="flex:0.2;"></div>
-            <button class="view-toggle-btn" style="border:1px solid #555;" id="btn-stitch" onclick="toggleStitchMode()">🔗 STITCH 2D WIDE WINDOWS</button>
-            <button class="view-toggle-btn" style="border:1px solid #d080ff; display:none;" id="btn-tag3d" onclick="toggleTaggingMode()">📍 TAG 3D WINDOW</button>
+            <button class="view-toggle-btn stitch-toggle" style="border:1px solid #555;" onclick="toggleStitchMode()">🔗 STITCH 2D/3D WIDE WINDOWS</button>
+            <button class="view-toggle-btn tag-toggle" style="border:1px solid #d080ff; display:none;" id="btn-tag3d-main" onclick="toggleTaggingMode()">📍 TAG 3D WINDOW</button>
         </div>
 
         <div class="stats-bar" id="stats-bar">
@@ -225,20 +208,28 @@
         </div>
 
         <div id="arena-3d">
-            <div style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #0cf; z-index: 100; text-align: right;">
+            <button class="btn-fullscreen" onclick="toggleFullScreen('arena-3d')">⛶ FULL SCREEN</button>
+            
+            <div style="position: absolute; top: 65px; right: 15px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #0cf; z-index: 100; text-align: right;">
                 <label style="color:#0cf; font-weight:bold; font-size:0.8rem; margin-bottom:8px; display:block; letter-spacing: 1px;">↔️ ADJUST WALL SPACING</label>
                 <input type="range" id="wallSpacingSlider" min="0" max="1500" value="500" style="width: 200px; cursor: pointer;" oninput="updateManualSpacing(this.value)">
             </div>
 
             <div id="world-3d"></div>
             
-            <div style="position: absolute; bottom: 15px; right: 15px; color: #888; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 20px; display: flex; gap: 15px; pointer-events: none;">
-                <span>🖱️ Click & Drag to Spin</span>
+            <div style="position: absolute; bottom: 25px; right: 25px; color: #888; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 20px; display: flex; gap: 15px; pointer-events: none;">
+                <span>🖱️ Drag to Spin</span>
                 <span style="color:#0cf;">🖱️ Scroll to Zoom</span>
+            </div>
+
+            <div class="floating-tools">
+                <button class="float-btn stitch-toggle" onclick="toggleStitchMode()">🔗 STITCH WIDE WINDOWS</button>
             </div>
         </div>
 
         <div id="arena-true3d">
+            <button class="btn-fullscreen" onclick="toggleFullScreen('arena-true3d')">⛶ FULL SCREEN</button>
+            
             <model-viewer id="main-3d-viewer"
                 src="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/LittlestTokyo.glb" 
                 alt="A 3D model of a building" 
@@ -248,12 +239,14 @@
                 shadow-intensity="1">
             </model-viewer>
             
-            <div style="position: absolute; top: 15px; left: 15px; color: #fff; font-size: 0.9rem; font-weight: bold; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 8px; border: 1px solid #d080ff; pointer-events:none;">
+            <div style="position: absolute; top: 15px; left: 15px; color: #fff; font-size: 0.9rem; font-weight: bold; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 8px; border: 1px solid #d080ff; pointer-events:none; z-index:100;">
                 <strong>Drone Photogrammetry Engine</strong><br>
                 <span id="model-status" style="font-weight:normal; color:#ccc;">Showing Default Test Model. Drop a custom .glb file above to replace.</span>
             </div>
 
-            <button class="btn" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.7); color: #fff; border: 1px solid #5a2e7a; z-index: 100;" onclick="toggleFullScreen()">⛶ FULL SCREEN</button>
+            <div class="floating-tools">
+                <button class="float-btn tag-toggle" onclick="toggleTaggingMode()">📍 TAG 3D WINDOW</button>
+            </div>
         </div>
 
     </div>
@@ -331,7 +324,6 @@
 
         let manualRadiusOffset = null;
 
-        // --- 3D TAGGING VARIABLES ---
         let isTaggingMode = false;
         let pendingTagCoordinates = null;
         let saved3DTags = {}; 
@@ -457,14 +449,13 @@
             }
         }
 
-        // --- FULL SCREEN FUNCTIONALITY ---
-        function toggleFullScreen() {
-            const arena = document.getElementById('arena-true3d');
+        function toggleFullScreen(elementId) {
+            const elem = document.getElementById(elementId);
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                if (arena.requestFullscreen) {
-                    arena.requestFullscreen();
-                } else if (arena.webkitRequestFullscreen) {
-                    arena.webkitRequestFullscreen();
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
@@ -475,11 +466,12 @@
             }
         }
 
-        // --- 3D TAGGING LOGIC ---
         function toggleTaggingMode() {
             isTaggingMode = !isTaggingMode;
-            const btn = document.getElementById('btn-tag3d');
-            btn.classList.toggle('tag-mode-on', isTaggingMode);
+            
+            document.querySelectorAll('.tag-toggle').forEach(btn => {
+                btn.classList.toggle('tag-mode-on', isTaggingMode);
+            });
             
             if(isTaggingMode) {
                 alert("📍 TAGGING MODE ACTIVE:\nDouble-click precisely on the 3D model to drop a pin for a logged window.");
@@ -551,7 +543,9 @@
             pendingTagCoordinates = null;
             
             isTaggingMode = false;
-            document.getElementById('btn-tag3d').classList.remove('tag-mode-on');
+            document.querySelectorAll('.tag-toggle').forEach(btn => {
+                btn.classList.remove('tag-mode-on');
+            });
             viewer.autoRotate = true;
             viewer.style.cursor = "default";
             
@@ -597,11 +591,14 @@
                 closeModal();
             }
         }
-        // --- END 3D TAGGING LOGIC ---
 
         function toggleStitchMode() {
             isStitchMode = !isStitchMode;
-            document.getElementById('btn-stitch').classList.toggle('stitch-mode-on', isStitchMode);
+            
+            document.querySelectorAll('.stitch-toggle').forEach(btn => {
+                btn.classList.toggle('stitch-mode-on', isStitchMode);
+            });
+            
             stitchSelection = [];
             if(isStitchMode) {
                 alert("STITCH MODE ACTIVE:\nClick the right half of the window, then click the left half. The system will merge them.");
@@ -634,7 +631,7 @@
                         stitchedPairs.splice(existingPairIndex, 1);
                         stitchSelection = [];
                         isStitchMode = false;
-                        document.getElementById('btn-stitch').classList.remove('stitch-mode-on');
+                        document.querySelectorAll('.stitch-toggle').forEach(btn => btn.classList.remove('stitch-mode-on'));
                         calculateBuildingGeometry();
                         refreshCurrentView();
                     }
@@ -648,7 +645,7 @@
                     stitchSelection.sort(); 
                     stitchedPairs.push([...stitchSelection]);
                     isStitchMode = false;
-                    document.getElementById('btn-stitch').classList.remove('stitch-mode-on');
+                    document.querySelectorAll('.stitch-toggle').forEach(btn => btn.classList.remove('stitch-mode-on'));
                     stitchSelection = [];
                     refreshCurrentView();
                 }
@@ -782,7 +779,6 @@
             });
             
             updateStatsUI();
-            
             render3DHotspots();
         }
 
@@ -798,7 +794,7 @@
             document.getElementById('btn-3d').classList.toggle('active', mode === '3d');
             document.getElementById('btn-true3d').classList.toggle('active', mode === 'true3d');
             
-            document.getElementById('btn-tag3d').style.display = (mode === 'true3d') ? 'inline-block' : 'none';
+            document.getElementById('btn-tag3d-main').style.display = (mode === 'true3d') ? 'inline-block' : 'none';
             
             document.getElementById('view-2d').style.display = (mode === '2d') ? 'block' : 'none';
             document.getElementById('arena-3d').style.display = (mode === '3d') ? 'flex' : 'none';
