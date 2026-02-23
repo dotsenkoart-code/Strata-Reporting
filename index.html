@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v4.5 Digital Twin</title>
+    <title>Strata Command Center | v5.1 Digital Twin</title>
+    
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
     <style>
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: #0f111a; color: #fff; margin: 0; padding: 20px; overflow-x: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0cf; padding-bottom: 15px; margin-bottom: 20px; }
@@ -28,6 +31,9 @@
         .view-toggle-btn { flex: 1; padding: 12px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; background: #222; color: #888; transition: 0.2s; }
         .view-toggle-btn.active { background: #0cf; color: #000; }
         
+        #btn-true3d { background: #2b113d; color: #d080ff; border: 1px solid #5a2e7a; }
+        #btn-true3d.active { background: #b055ff; color: #fff; }
+
         .stitch-mode-on { border-color: #f39c12 !important; background: rgba(243, 156, 18, 0.2) !important; color: #f39c12 !important; box-shadow: 0 0 10px rgba(243, 156, 18, 0.5); }
         .node-selected { border-color: #0cf !important; transform: scale(1.1); box-shadow: 0 0 15px #0cf !important; z-index: 20 !important; }
 
@@ -53,19 +59,22 @@
         .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; position: relative; }
         .window-node:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 10; }
         
-        /* Workflow Colors */
         .status-clear { background: #28a745; } 
         .status-flagged { background: #f1c40f; color: #000; } 
         .status-confirmed { background: #d9534f; } 
         .status-empty { background: #222; border: 2px dashed #444; color: #555; pointer-events: none; }
         .status-void { background: transparent; border: 2px solid transparent; cursor: default; pointer-events: none; }
 
-        /* --- 3D ARENA STYLES --- */
+        /* --- CSS 3D ARENA STYLES --- */
         #arena-3d { display: none; perspective: 1500px; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #1a1d27 0%, #0f111a 100%); border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; align-items: center; justify-content: center; margin-bottom: 20px; }
         #arena-3d:active { cursor: grabbing; }
         #world-3d { transform-style: preserve-3d; transition: transform 0.1s ease-out; display: flex; align-items: center; justify-content: center; }
         .wall-3d { position: absolute; transform-style: preserve-3d; background: rgba(15, 17, 26, 0.8); border: 2px solid #333; padding: 20px; border-radius: 12px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; gap: 15px; align-items: flex-end; }
         .wall-title-3d { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); color: #0cf; font-size: 1.5rem; font-weight: 900; white-space: nowrap; text-shadow: 0 5px 10px rgba(0,0,0,0.8); }
+
+        /* --- TRUE 3D TWIN VIEWER --- */
+        #arena-true3d { display: none; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #2a2d38 0%, #0f111a 100%); border: 1px solid #5a2e7a; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 20px; box-shadow: 0 0 30px rgba(176, 85, 255, 0.2); }
+        model-viewer { width: 100%; height: 100%; outline: none; }
 
         /* --- MODAL --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(3px); }
@@ -85,7 +94,6 @@
         .manager-section { margin-top: 20px; background: #111; padding: 15px; border-radius: 8px; border: 1px solid #333; }
         .modal-notes { width: 100%; height: 80px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-top: 5px; font-family: inherit; resize: none; box-sizing: border-box; }
         
-        /* NEW STATUS BUTTONS */
         .status-btns { display: flex; gap: 10px; margin-top: 15px; margin-bottom: 15px; }
         .btn-status { flex: 1; padding: 10px; font-size: 0.8rem; border-radius: 4px; }
         .btn-status-yellow { background: #f1c40f; color: #000; }
@@ -108,7 +116,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v4.5 Digital Twin</span></h1>
+            <h1>STRATA COMMAND <span>| v5.1 Digital Twin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -119,8 +127,8 @@
 
     <input type="file" id="multiFileInput" multiple style="display: none;">
     <div class="upload-zone" id="drop-zone" onclick="document.getElementById('multiFileInput').click()">
-        <h2 id="drop-text">📥 Drop CSVs & Photo Folders Here</h2>
-        <p id="drop-subtext" style="color:#555; margin:0; font-size:0.9rem;">Select your CSVs and all your FLIR images at the same time</p>
+        <h2 id="drop-text">📥 Drop CSVs, Photos, & 3D Models Here</h2>
+        <p id="drop-subtext" style="color:#555; margin:0; font-size:0.9rem;">Accepts .csv, .jpg, .png, .glb, and .gltf files</p>
     </div>
     
     <button id="btn-start-mapping" class="btn btn-green btn-block" style="display:none; padding: 20px; font-size: 1.2rem;" onclick="openMappingScreen()">🗺️ MAP BUILDING ELEVATIONS</button>
@@ -142,8 +150,9 @@
         <div class="view-controls">
             <span style="color:#888; font-weight:bold; font-size:0.9rem; margin-right: 10px;">MODE:</span>
             <button class="view-toggle-btn active" id="btn-2d" onclick="switchView('2d')">2D TABS</button>
-            <button class="view-toggle-btn" id="btn-3d" onclick="switchView('3d')">3D ORBIT</button>
-            <div style="flex:0.5;"></div>
+            <button class="view-toggle-btn" id="btn-3d" onclick="switchView('3d')">CSS 3D ORBIT</button>
+            <button class="view-toggle-btn" id="btn-true3d" onclick="switchView('true3d')">✨ TRUE 3D TWIN</button>
+            <div style="flex:0.2;"></div>
             <button class="view-toggle-btn" style="border:1px solid #555;" id="btn-stitch" onclick="toggleStitchMode()">🔗 STITCH WIDE WINDOWS</button>
         </div>
 
@@ -176,6 +185,21 @@
             <div style="position: absolute; bottom: 15px; right: 15px; color: #888; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 20px; display: flex; gap: 15px;">
                 <span>🖱️ Click & Drag to Spin</span>
                 <span style="color:#0cf;">🖱️ Scroll to Zoom</span>
+            </div>
+        </div>
+
+        <div id="arena-true3d">
+            <model-viewer id="main-3d-viewer"
+                src="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/LittlestTokyo.glb" 
+                alt="A 3D model of a building" 
+                auto-rotate 
+                camera-controls 
+                tone-mapping="neutral" 
+                shadow-intensity="1">
+            </model-viewer>
+            <div style="position: absolute; top: 15px; left: 15px; color: #fff; font-size: 0.9rem; font-weight: bold; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 8px; border: 1px solid #d080ff;">
+                <strong>Drone Photogrammetry Engine</strong><br>
+                <span id="model-status" style="font-weight:normal; color:#ccc;">Showing Default Test Model. Drop a custom .glb file above to replace.</span>
             </div>
         </div>
 
@@ -217,23 +241,19 @@
         let inspectionData = {};
         let projectInfo = "Unknown Project";
         
-        // --- STITCH ENGINE & MODAL STATE ---
         let activeNodeDataArray = []; 
         let isStitchMode = false;
         let stitchSelection = [];
         let stitchedPairs = []; 
         
-        // --- IMAGE BANK ---
         let imageBank = {}; 
         let linkedPhotosCount = 0;
 
-        // Architecture State
         let elevations = ["Main Elevation"]; 
         let dropAssignments = {}; 
         let activeTab = "Main Elevation";
         let globalStats = { t:0, f:0, c:0, maxFloor: -Infinity, minFloor: Infinity };
 
-        // --- 3D ENGINE STATE ---
         let currentMode = '2d'; 
         let isDragging = false;
         let previousMousePosition = { x: 0, y: 0 };
@@ -241,7 +261,6 @@
         let rotationX = 5;   
         let zoomZ = -400; 
 
-        // --- DRAG AND DROP LOGIC ---
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('multiFileInput');
 
@@ -256,11 +275,20 @@
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
+                
+                // IMAGE HANDLING
                 if (file.type.startsWith('image/')) {
                     const cleanName = file.name.split('.')[0].toUpperCase();
                     imageBank[cleanName] = URL.createObjectURL(file);
                     linkedPhotosCount++;
                 } 
+                // 3D MODEL HANDLING (NEW)
+                else if (file.name.toLowerCase().endsWith('.glb') || file.name.toLowerCase().endsWith('.gltf')) {
+                    const modelUrl = URL.createObjectURL(file);
+                    document.getElementById('main-3d-viewer').src = modelUrl;
+                    document.getElementById('model-status').innerHTML = `<span style="color:#0cf;">Loaded Custom Model:</span> ${file.name}`;
+                }
+                // CSV HANDLING
                 else if (file.name.toLowerCase().endsWith('.csv')) {
                     csvPromises.push(new Promise((resolve) => {
                         const reader = new FileReader();
@@ -277,14 +305,14 @@
             
             dropZone.classList.add('compact');
             document.getElementById('drop-text').innerText = "➕ Add More Files";
-            document.getElementById('drop-subtext').innerText = "Drop CSVs or Photo folders here";
+            document.getElementById('drop-subtext').innerText = "Drop CSVs, Photos, or a 3D Model here";
             
             document.getElementById('btn-reset').style.display = 'inline-block';
             document.getElementById('btn-start-mapping').style.display = 'block';
             
             if (document.getElementById('dashboard-screen').style.display === 'block') {
                 calculateBuildingGeometry();
-                refreshCurrentView();
+                if (currentMode !== 'true3d') refreshCurrentView();
             }
             fileInput.value = "";
         }
@@ -322,7 +350,6 @@
                         if(inspectionData[drop][floor][pos]) {
                             existingNotes = inspectionData[drop][floor][pos].notes;
                             if(inspectionData[drop][floor][pos].status === 'status-confirmed') existingStatus = 'status-confirmed';
-                            // Also preserve overriding manual clears/flags
                             if(inspectionData[drop][floor][pos].status === 'status-clear') existingStatus = 'status-clear';
                             if(inspectionData[drop][floor][pos].status === 'status-flagged') existingStatus = 'status-flagged';
                         }
@@ -339,13 +366,12 @@
             }
         }
 
-        // --- STITCH ENGINE ---
         function toggleStitchMode() {
             isStitchMode = !isStitchMode;
             document.getElementById('btn-stitch').classList.toggle('stitch-mode-on', isStitchMode);
             stitchSelection = [];
             if(isStitchMode) alert("STITCH MODE ACTIVE:\nClick the right half of the window, then click the left half. The system will merge them.");
-            refreshCurrentView();
+            if (currentMode !== 'true3d') refreshCurrentView();
         }
 
         function getNodeData(fullId) {
@@ -388,7 +414,6 @@
             openModal(data.id);
         }
 
-        // --- MAPPING (THE SORTING HAT) ---
         function openMappingScreen() {
             document.getElementById('btn-start-mapping').style.display = 'none';
             document.getElementById('mapping-screen').style.display = 'block';
@@ -437,7 +462,7 @@
             if(!elevations.includes(activeTab)) activeTab = elevations[0];
             
             calculateBuildingGeometry();
-            refreshCurrentView();
+            if (currentMode !== 'true3d') refreshCurrentView();
         }
 
         function calculateBuildingGeometry() {
@@ -485,23 +510,26 @@
             currentMode = mode;
             document.getElementById('btn-2d').classList.toggle('active', mode === '2d');
             document.getElementById('btn-3d').classList.toggle('active', mode === '3d');
+            document.getElementById('btn-true3d').classList.toggle('active', mode === 'true3d');
             
             document.getElementById('view-2d').style.display = (mode === '2d') ? 'block' : 'none';
             document.getElementById('arena-3d').style.display = (mode === '3d') ? 'flex' : 'none';
+            document.getElementById('arena-true3d').style.display = (mode === 'true3d') ? 'block' : 'none';
 
-            refreshCurrentView();
+            if (mode !== 'true3d') {
+                refreshCurrentView();
+            }
         }
 
         function refreshCurrentView() {
             if (currentMode === '2d') {
                 renderTabs();
                 render2DGrid();
-            } else {
+            } else if (currentMode === '3d') {
                 render3DArena();
             }
         }
 
-        // --- GRID GENERATOR FACTORY ---
         function generateWallDOM(elevationName, useGlobalFloors = false) {
             const fragment = document.createDocumentFragment();
             const activeDrops = Object.keys(inspectionData).filter(d => dropAssignments[d] === elevationName).sort();
@@ -623,7 +651,6 @@
             container.appendChild(generateWallDOM(activeTab, false));
         }
 
-        // --- UPDATED 3D ARENA MATH ENGINE ---
         function render3DArena() {
             const world = document.getElementById('world-3d');
             world.innerHTML = '';
@@ -701,7 +728,6 @@
         }, {passive: true});
         window.addEventListener('touchend', () => { isDragging = false; });
 
-        // --- AGGREGATING MODAL LOGIC ---
         function openModal(nodeId) {
             let pair = stitchedPairs.find(p => p.includes(nodeId));
             activeNodeDataArray = [];
@@ -713,7 +739,6 @@
                 activeNodeDataArray.push(getNodeData(nodeId));
             }
 
-            // Aggregate Data
             let ids = activeNodeDataArray.map(d => d.id).join(' + ');
             let techs = [...new Set(activeNodeDataArray.map(d => d.tech))].join(', ');
             
@@ -738,7 +763,6 @@
             document.getElementById('m-flir').innerText = flirs.join(' & ') || '--';
             document.getElementById('m-notes').value = notes;
             
-            // THE IMAGE LINKER GALLERY
             const gallery = document.getElementById('m-photo-gallery');
             const noPhoto = document.getElementById('m-no-photo');
             gallery.innerHTML = '';
@@ -759,15 +783,14 @@
             document.getElementById('info-modal').style.display = 'flex';
         }
 
-        // NEW: MASTER STATUS OVERRIDE FUNCTION
         function changeStatus(newStatus) {
             if (activeNodeDataArray.length > 0) {
                 let note = document.getElementById('m-notes').value;
                 activeNodeDataArray.forEach(d => {
-                    d.notes = note; // Save the note
-                    d.status = newStatus; // Force the new status
+                    d.notes = note; 
+                    d.status = newStatus; 
                 });
-                refreshCurrentView();
+                if (currentMode !== 'true3d') refreshCurrentView();
                 closeModal();
             }
         }
@@ -778,7 +801,7 @@
                 activeNodeDataArray.forEach(d => {
                     d.notes = note;
                 });
-                refreshCurrentView();
+                if (currentMode !== 'true3d') refreshCurrentView();
                 closeModal();
             }
         }
@@ -788,7 +811,6 @@
             activeNodeDataArray = [];
         }
 
-        // --- UTILITIES ---
         function resetBoard() {
             if(confirm("Are you sure you want to clear all data and start over?")) {
                 inspectionData = {};
@@ -807,9 +829,13 @@
                 document.getElementById('btn-reset').style.display = 'none';
                 document.getElementById('btn-start-mapping').style.display = 'none';
                 
+                // Reset the 3D model to the test placeholder
+                document.getElementById('main-3d-viewer').src = "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/LittlestTokyo.glb";
+                document.getElementById('model-status').innerHTML = "Showing Default Test Model. Drop a custom .glb file above to replace.";
+                
                 dropZone.classList.remove('compact');
-                document.getElementById('drop-text').innerText = "📥 Drop CSVs & Photo Folders Here";
-                document.getElementById('drop-subtext').innerText = "Select your CSVs and all your FLIR images at the same time";
+                document.getElementById('drop-text').innerText = "📥 Drop CSVs, Photos, & 3D Models Here";
+                document.getElementById('drop-subtext').innerText = "Accepts .csv, .jpg, .png, .glb, and .gltf files";
             }
         }
 
