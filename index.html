@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v5.8 Custom 3D Spacing</title>
+    <title>Strata Command Center | v5.9 Spatial Tagging</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
@@ -36,6 +36,7 @@
         #btn-true3d.active { background: #b055ff; color: #fff; }
 
         .stitch-mode-on { border-color: #f39c12 !important; background: rgba(243, 156, 18, 0.2) !important; color: #f39c12 !important; box-shadow: 0 0 10px rgba(243, 156, 18, 0.5); }
+        .tag-mode-on { border-color: #d080ff !important; background: rgba(176, 85, 255, 0.2) !important; color: #fff !important; box-shadow: 0 0 15px rgba(176, 85, 255, 0.6) !important; }
         .node-selected { border-color: #0cf !important; transform: scale(1.1); box-shadow: 0 0 15px #0cf !important; z-index: 20 !important; }
 
         .tabs-container { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 5px; border-bottom: 2px solid #333; margin-bottom: 20px; }
@@ -53,6 +54,7 @@
         .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-width: max-content; }
         .drop-header { text-align: center; font-size: 1.2rem; font-weight: bold; color: #0cf; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         
+        /* NEW Y-AXIS STYLES */
         .floor-axis-column { background: transparent; border: none; padding-right: 0; padding-left: 0; min-width: auto; margin-right: -5px; }
         .floor-axis-header { color: transparent; border-bottom-color: transparent; }
         
@@ -63,6 +65,7 @@
         .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; position: relative; }
         .window-node:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 10; }
         
+        /* CSS BRIDGE CLASS */
         .stitch-bridge { position: absolute; top: -2px; bottom: -2px; right: -39px; width: 39px; z-index: -1; border-top: 2px solid rgba(0,0,0,0.5); border-bottom: 2px solid rgba(0,0,0,0.5); }
 
         .status-clear { background: #28a745; } 
@@ -81,8 +84,17 @@
         /* --- TRUE 3D TWIN VIEWER --- */
         #arena-true3d { display: none; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #2a2d38 0%, #0f111a 100%); border: 1px solid #5a2e7a; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 20px; box-shadow: 0 0 30px rgba(176, 85, 255, 0.2); }
         model-viewer { width: 100%; height: 100%; outline: none; }
+        
+        /* 3D PIN HOTSPOTS */
+        .hotspot-dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.8); cursor: pointer; transform: translate(-50%, -50%); transition: transform 0.2s; }
+        .hotspot-dot:hover { transform: translate(-50%, -50%) scale(1.5); }
+        .hotspot-dot.status-clear { background: #28a745; box-shadow: 0 0 15px #28a745; }
+        .hotspot-dot.status-flagged { background: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
+        .hotspot-dot.status-confirmed { background: #d9534f; box-shadow: 0 0 15px #d9534f; }
+        .hotspot-label { position: absolute; background: rgba(0,0,0,0.8); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; top: -30px; left: 50%; transform: translateX(-50%); white-space: nowrap; pointer-events: none; border: 1px solid #555; }
 
-        /* --- MODAL --- */
+
+        /* --- MODALS --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(3px); }
         .modal-box { background: #1a1d27; border: 1px solid #0cf; border-radius: 12px; padding: 25px; width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 15px 35px rgba(0,0,0,0.9); }
         .modal-title { font-size: 2rem; color: #0cf; margin: 0 0 5px 0; font-weight: 900; }
@@ -122,7 +134,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v5.8 Custom 3D Spacing</span></h1>
+            <h1>STRATA COMMAND <span>| v5.9 Spatial Tagging</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -160,7 +172,9 @@
             <button class="view-toggle-btn" id="btn-3d" onclick="switchView('3d')">CSS 3D ORBIT</button>
             <button class="view-toggle-btn" id="btn-true3d" onclick="switchView('true3d')">✨ TRUE 3D TWIN</button>
             <div style="flex:0.2;"></div>
-            <button class="view-toggle-btn" style="border:1px solid #555;" id="btn-stitch" onclick="toggleStitchMode()">🔗 STITCH WIDE WINDOWS</button>
+            <button class="view-toggle-btn" style="border:1px solid #555;" id="btn-stitch" onclick="toggleStitchMode()">🔗 STITCH 2D/3D WIDE WINDOWS</button>
+            
+            <button class="view-toggle-btn" style="border:1px solid #d080ff; display:none;" id="btn-tag3d" onclick="toggleTaggingMode()">📍 TAG 3D WINDOW</button>
         </div>
 
         <div class="stats-bar" id="stats-bar">
@@ -211,7 +225,7 @@
                 tone-mapping="neutral" 
                 shadow-intensity="1">
             </model-viewer>
-            <div style="position: absolute; top: 15px; left: 15px; color: #fff; font-size: 0.9rem; font-weight: bold; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 8px; border: 1px solid #d080ff;">
+            <div style="position: absolute; top: 15px; left: 15px; color: #fff; font-size: 0.9rem; font-weight: bold; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 8px; border: 1px solid #d080ff; pointer-events:none;">
                 <strong>Drone Photogrammetry Engine</strong><br>
                 <span id="model-status" style="font-weight:normal; color:#ccc;">Showing Default Test Model. Drop a custom .glb file above to replace.</span>
             </div>
@@ -246,10 +260,22 @@
                         <button class="btn btn-status btn-red" onclick="changeStatus('status-confirmed')">🚨 CONFIRM DEFECT</button>
                     </div>
                 </div>
-
             </div>
             
             <button class="btn btn-dark btn-block" onclick="saveNotesOnly()">💾 SAVE NOTES & CLOSE</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="tagging-modal">
+        <div class="modal-box" style="border-color:#d080ff;">
+            <h2 style="color:#d080ff; margin-top:0; font-size: 1.8rem;">📍 PIN WINDOW TO 3D MODEL</h2>
+            <p style="color:#888; font-size:0.9rem; margin-bottom:20px;">Select which logged window you just clicked on:</p>
+            
+            <select id="tagging-window-select" style="width:100%; padding:15px; background:#222; color:#fff; border:1px solid #555; border-radius:8px; font-size:1.1rem; font-weight:bold; margin-bottom:20px;">
+                </select>
+            
+            <button class="btn btn-green btn-block" onclick="confirm3DTag()">✅ DROP PIN</button>
+            <button class="btn btn-dark btn-block" onclick="cancel3DTag()">🔙 CANCEL</button>
         </div>
     </div>
 
@@ -277,16 +303,36 @@
         let rotationX = 5;   
         let zoomZ = -400; 
 
-        // NEW GLOBAL VARIABLE FOR MANUAL 3D SPACING OVERRIDE
         let manualRadiusOffset = null;
+
+        // --- 3D TAGGING VARIABLES ---
+        let isTaggingMode = false;
+        let pendingTagCoordinates = null;
+        let saved3DTags = {}; // Stores { windowId: { position: "x y z", normal: "x y z" } }
 
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('multiFileInput');
+        const viewer = document.querySelector('#main-3d-viewer');
 
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
-        fileInput.addEventListener('change', (e) => { handleFiles(e.target.files); });
+        dropZone.addEventListener('dragover', (e) => { 
+            e.preventDefault(); 
+            dropZone.classList.add('dragover'); 
+        });
+        
+        dropZone.addEventListener('dragleave', (e) => { 
+            e.preventDefault(); 
+            dropZone.classList.remove('dragover'); 
+        });
+        
+        dropZone.addEventListener('drop', (e) => { 
+            e.preventDefault(); 
+            dropZone.classList.remove('dragover'); 
+            handleFiles(e.dataTransfer.files); 
+        });
+        
+        fileInput.addEventListener('change', (e) => { 
+            handleFiles(e.target.files); 
+        });
 
         async function handleFiles(files) {
             if (!files || files.length === 0) return;
@@ -302,13 +348,16 @@
                 } 
                 else if (file.name.toLowerCase().endsWith('.glb') || file.name.toLowerCase().endsWith('.gltf')) {
                     const modelUrl = URL.createObjectURL(file);
-                    document.getElementById('main-3d-viewer').src = modelUrl;
+                    viewer.src = modelUrl;
                     document.getElementById('model-status').innerHTML = `<span style="color:#0cf;">Loaded Custom Model:</span> ${file.name}`;
                 }
                 else if (file.name.toLowerCase().endsWith('.csv')) {
                     csvPromises.push(new Promise((resolve) => {
                         const reader = new FileReader();
-                        reader.onload = (event) => { parseCSV(event.target.result); resolve(); };
+                        reader.onload = (event) => { 
+                            parseCSV(event.target.result); 
+                            resolve(); 
+                        };
                         reader.readAsText(file);
                     }));
                 }
@@ -382,11 +431,128 @@
             }
         }
 
+        // --- 3D TAGGING LOGIC ---
+        function toggleTaggingMode() {
+            isTaggingMode = !isTaggingMode;
+            const btn = document.getElementById('btn-tag3d');
+            btn.classList.toggle('tag-mode-on', isTaggingMode);
+            
+            if(isTaggingMode) {
+                alert("📍 TAGGING MODE ACTIVE:\nDouble-click anywhere on the 3D model to pin a logged window to that exact physical location.");
+                viewer.autoRotate = false; // Stop spinning while trying to click
+            } else {
+                viewer.autoRotate = true;
+            }
+        }
+
+        // Catch double-clicks on the 3D model
+        viewer.addEventListener('dblclick', (event) => {
+            if (!isTaggingMode) return;
+            
+            const rect = viewer.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Extract exact 3D coordinate from the 2D click
+            const hit = viewer.positionAndNormalFromPoint(x, y);
+            
+            if (hit != null) {
+                pendingTagCoordinates = hit;
+                populateTaggingDropdown();
+                document.getElementById('tagging-modal').style.display = 'flex';
+            }
+        });
+
+        function populateTaggingDropdown() {
+            const select = document.getElementById('tagging-window-select');
+            select.innerHTML = "";
+            
+            let allIds = [];
+            Object.keys(inspectionData).forEach(dropStr => {
+                Object.keys(inspectionData[dropStr]).forEach(floorNum => {
+                    Object.keys(inspectionData[dropStr][floorNum]).forEach(pos => {
+                        allIds.push(inspectionData[dropStr][floorNum][pos]);
+                    });
+                });
+            });
+            
+            // Sort by defect status first (to easily find leaks), then alphabetically
+            allIds.sort((a, b) => {
+                if(a.status !== b.status) return a.status === 'status-clear' ? 1 : -1;
+                return a.id.localeCompare(b.id);
+            });
+            
+            allIds.forEach(data => {
+                const opt = document.createElement('option');
+                opt.value = data.id;
+                let symbol = data.status === 'status-clear' ? '✅' : (data.status === 'status-confirmed' ? '🚨' : '⚠️');
+                opt.innerText = `${symbol} ${data.id} (${data.finds.split('|')[0]})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function cancel3DTag() {
+            document.getElementById('tagging-modal').style.display = 'none';
+            pendingTagCoordinates = null;
+        }
+
+        function confirm3DTag() {
+            const selectedId = document.getElementById('tagging-window-select').value;
+            
+            saved3DTags[selectedId] = {
+                position: pendingTagCoordinates.position.toString(),
+                normal: pendingTagCoordinates.normal.toString()
+            };
+            
+            document.getElementById('tagging-modal').style.display = 'none';
+            pendingTagCoordinates = null;
+            
+            // Turn off tagging mode automatically after a successful drop
+            isTaggingMode = false;
+            document.getElementById('btn-tag3d').classList.remove('tag-mode-on');
+            viewer.autoRotate = true;
+            
+            render3DHotspots();
+        }
+
+        function render3DHotspots() {
+            // Clear existing hotspots
+            viewer.querySelectorAll('.hotspot-dot').forEach(el => el.remove());
+            
+            Object.keys(saved3DTags).forEach(id => {
+                const data = getNodeData(id);
+                if(!data) return;
+                
+                const btn = document.createElement('button');
+                btn.slot = `hotspot-${id}`;
+                btn.dataset.position = saved3DTags[id].position;
+                btn.dataset.normal = saved3DTags[id].normal;
+                
+                // Determine final status (checking if stitched)
+                let finalStatus = data.status;
+                let pair = stitchedPairs.find(p => p.includes(data.id));
+                if(pair) finalStatus = getCombinedStatus(pair[0], pair[1]);
+                
+                btn.className = `hotspot-dot ${finalStatus}`;
+                btn.onclick = () => openModal(id);
+                
+                const label = document.createElement('div');
+                label.className = 'hotspot-label';
+                label.innerText = id;
+                btn.appendChild(label);
+                
+                viewer.appendChild(btn);
+            });
+        }
+        // --- END 3D TAGGING LOGIC ---
+
         function toggleStitchMode() {
             isStitchMode = !isStitchMode;
             document.getElementById('btn-stitch').classList.toggle('stitch-mode-on', isStitchMode);
             stitchSelection = [];
-            if(isStitchMode) alert("STITCH MODE ACTIVE:\nClick the right half of the window, then click the left half. The system will merge them.");
+            if(isStitchMode) {
+                alert("STITCH MODE ACTIVE:\nClick the right half of the window, then click the left half. The system will merge them.");
+            }
             if (currentMode !== 'true3d') refreshCurrentView();
         }
 
@@ -464,6 +630,7 @@
                         if (dropAssignments[d] === "") dropAssignments[d] = val;
                     });
                 }
+                
                 input.value = "";
                 renderMappingList();
             }
@@ -553,7 +720,8 @@
             }
             
             stitchedPairs.forEach(pair => {
-                let d1 = getNodeData(pair[0]); let d2 = getNodeData(pair[1]);
+                let d1 = getNodeData(pair[0]); 
+                let d2 = getNodeData(pair[1]);
                 if (d1 && d2) {
                     if(d1.status === 'status-flagged' && d2.status === 'status-flagged') globalStats.f--;
                     if(d1.status === 'status-confirmed' && d2.status === 'status-confirmed') globalStats.c--;
@@ -561,6 +729,9 @@
             });
             
             updateStatsUI();
+            
+            // Re-render 3D tags if their status changed
+            render3DHotspots();
         }
 
         function updateStatsUI() {
@@ -575,6 +746,9 @@
             document.getElementById('btn-3d').classList.toggle('active', mode === '3d');
             document.getElementById('btn-true3d').classList.toggle('active', mode === 'true3d');
             
+            // Show Tagging button only in True 3D mode
+            document.getElementById('btn-tag3d').style.display = (mode === 'true3d') ? 'inline-block' : 'none';
+            
             document.getElementById('view-2d').style.display = (mode === '2d') ? 'block' : 'none';
             document.getElementById('arena-3d').style.display = (mode === '3d') ? 'flex' : 'none';
             document.getElementById('arena-true3d').style.display = (mode === 'true3d') ? 'block' : 'none';
@@ -584,7 +758,6 @@
             }
         }
 
-        // TRIGGERED BY THE NEW SLIDER
         function updateManualSpacing(val) {
             manualRadiusOffset = parseInt(val, 10);
             if (currentMode === '3d') {
@@ -627,6 +800,7 @@
                 });
             }
 
+            // --- Y-AXIS FLOOR COLUMN ---
             const axisCol = document.createElement('div');
             axisCol.className = 'drop-column floor-axis-column';
             
@@ -643,6 +817,7 @@
             }
             fragment.appendChild(axisCol);
             
+            // --- DROP COLUMNS ---
             activeDrops.forEach(dropStr => {
                 const dropDiv = document.createElement('div');
                 dropDiv.className = 'drop-column';
@@ -768,7 +943,6 @@
             
             const estimatedMaxWidth = Math.max(300, (maxDropsOnAWall * 170) + 100);
 
-            // LOGIC FOR THE SPACING OVERRIDE
             let radius = 0;
             if (manualRadiusOffset !== null) {
                 radius = manualRadiusOffset;
@@ -910,7 +1084,8 @@
                     d.notes = note; 
                     d.status = newStatus; 
                 });
-                if (currentMode !== 'true3d') refreshCurrentView();
+                calculateBuildingGeometry();
+                refreshCurrentView();
                 closeModal();
             }
         }
@@ -921,7 +1096,8 @@
                 activeNodeDataArray.forEach(d => {
                     d.notes = note;
                 });
-                if (currentMode !== 'true3d') refreshCurrentView();
+                calculateBuildingGeometry();
+                refreshCurrentView();
                 closeModal();
             }
         }
@@ -941,6 +1117,7 @@
                 elevations = [];
                 dropAssignments = {};
                 manualRadiusOffset = null;
+                saved3DTags = {};
                 
                 document.getElementById('project-name').innerText = "Awaiting Data...";
                 document.getElementById('stat-photos').innerText = "0";
