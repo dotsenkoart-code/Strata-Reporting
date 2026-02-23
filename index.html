@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v5.3 Digital Twin</title>
+    <title>Strata Command Center | v5.6 Visual Merge</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
@@ -60,6 +60,9 @@
         .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; position: relative; }
         .window-node:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 10; }
         
+        /* CSS BRIDGE CLASS */
+        .stitch-bridge { position: absolute; top: -2px; bottom: -2px; right: -39px; width: 39px; z-index: -1; border-top: 2px solid rgba(0,0,0,0.5); border-bottom: 2px solid rgba(0,0,0,0.5); }
+
         .status-clear { background: #28a745; } 
         .status-flagged { background: #f1c40f; color: #000; } 
         .status-confirmed { background: #d9534f; } 
@@ -117,7 +120,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v5.3 Digital Twin</span></h1>
+            <h1>STRATA COMMAND <span>| v5.6 Visual Merge</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -211,6 +214,8 @@
         <div class="modal-box">
             <h2 class="modal-title" id="m-id">A-12-L</h2>
             <div class="modal-subtitle" id="m-tech">Logged by Tech at 14:30</div>
+            
+            <button class="btn btn-dark btn-block" id="btn-unmerge" style="display:none; margin-bottom:15px; border-color:#f39c12; color:#f39c12;" onclick="unmergeCurrent()">✂️ UN-STITCH THESE WINDOWS</button>
             
             <div class="photo-gallery" id="m-photo-gallery"></div>
             <div id="m-no-photo" class="no-photo-banner">IMAGE NOT UPLOADED TO DASHBOARD</div>
@@ -359,7 +364,6 @@
                             notes: existingNotes
                         };
                         
-                        // Default to an empty string so it forces the user to assign it
                         if(!dropAssignments[drop]) dropAssignments[drop] = "";
                     }
                 }
@@ -393,8 +397,17 @@
 
         function handleNodeClick(data, nodeElement) {
             if(isStitchMode) {
-                if (stitchedPairs.some(p => p.includes(data.id))) {
-                    alert("This window is already stitched!");
+                // NEW UNMERGE FROM STITCH MODE LOGIC
+                let existingPairIndex = stitchedPairs.findIndex(p => p.includes(data.id));
+                if (existingPairIndex !== -1) {
+                    if(confirm("This window is already stitched. Do you want to un-stitch it?")) {
+                        stitchedPairs.splice(existingPairIndex, 1);
+                        stitchSelection = [];
+                        isStitchMode = false;
+                        document.getElementById('btn-stitch').classList.remove('stitch-mode-on');
+                        calculateBuildingGeometry();
+                        refreshCurrentView();
+                    }
                     return;
                 }
                 
@@ -420,7 +433,6 @@
             renderMappingList();
         }
 
-        // NEW: Allows going back to fix mappings after Dashboard is generated
         function editMapping() {
             document.getElementById('dashboard-screen').style.display = 'none';
             document.getElementById('mapping-screen').style.display = 'block';
@@ -437,12 +449,10 @@
                 
                 if (elevations.length === 1) {
                     activeTab = val;
-                    // Auto-assign any unassigned drops to this first wall to save time
                     Object.keys(dropAssignments).forEach(d => {
                         if (dropAssignments[d] === "") dropAssignments[d] = val;
                     });
                 }
-                
                 input.value = "";
                 renderMappingList();
             }
@@ -499,7 +509,6 @@
             document.getElementById('mapping-screen').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'block';
             document.getElementById('btn-export').style.display = 'inline-block';
-            // NEW: Show Edit Map button when dashboard is active
             document.getElementById('btn-edit-map').style.display = 'inline-block';
             
             if(!elevations.includes(activeTab)) activeTab = elevations[0];
@@ -637,18 +646,31 @@
                             
                             if (imageBank[data.flir]) winNode.style.border = "2px solid #fff";
 
+                            // THE CSS BRIDGE HACK
                             if (isStitchedLeft) {
-                                let shadowColor = finalStatus === 'status-confirmed' ? '#d9534f' : finalStatus === 'status-flagged' ? '#f1c40f' : '#28a745';
-                                winNode.style.boxShadow = `15px 0 0 ${shadowColor}`;
-                                winNode.style.zIndex = '5';
                                 winNode.style.borderTopRightRadius = '0';
                                 winNode.style.borderBottomRightRadius = '0';
-                                if (imageBank[data.flir]) winNode.style.borderRight = "none";
+                                winNode.style.borderRight = "none";
+                                winNode.style.zIndex = '5';
+                                
+                                const bridge = document.createElement('div');
+                                bridge.className = `stitch-bridge ${finalStatus}`;
+                                
+                                if (imageBank[data.flir]) {
+                                    winNode.style.borderRight = "none";
+                                    bridge.style.borderTop = "2px solid #fff";
+                                    bridge.style.borderBottom = "2px solid #fff";
+                                }
+                                winNode.appendChild(bridge);
                             }
                             if (isStitchedRight) {
                                 winNode.style.borderTopLeftRadius = '0';
                                 winNode.style.borderBottomLeftRadius = '0';
-                                if (imageBank[data.flir]) winNode.style.borderLeft = "none";
+                                winNode.style.borderLeft = "none";
+                                winNode.style.zIndex = '6'; 
+                                if (imageBank[data.flir]) {
+                                    winNode.style.borderLeft = "none";
+                                }
                             }
                             
                             winGroup.appendChild(winNode);
@@ -775,11 +797,14 @@
             let pair = stitchedPairs.find(p => p.includes(nodeId));
             activeNodeDataArray = [];
             
+            // Show or Hide the Unmerge button
             if (pair) {
                 activeNodeDataArray.push(getNodeData(pair[0]));
                 activeNodeDataArray.push(getNodeData(pair[1]));
+                document.getElementById('btn-unmerge').style.display = 'block';
             } else {
                 activeNodeDataArray.push(getNodeData(nodeId));
+                document.getElementById('btn-unmerge').style.display = 'none';
             }
 
             let ids = activeNodeDataArray.map(d => d.id).join(' + ');
@@ -824,6 +849,20 @@
             noPhoto.style.display = hasPhoto ? 'none' : 'block';
             
             document.getElementById('info-modal').style.display = 'flex';
+        }
+
+        // NEW UNMERGE FUNCTION FROM MODAL
+        function unmergeCurrent() {
+            if (activeNodeDataArray.length === 2) {
+                const id1 = activeNodeDataArray[0].id;
+                const idx = stitchedPairs.findIndex(p => p.includes(id1));
+                if (idx !== -1) {
+                    stitchedPairs.splice(idx, 1);
+                    closeModal();
+                    calculateBuildingGeometry();
+                    refreshCurrentView();
+                }
+            }
         }
 
         function changeStatus(newStatus) {
