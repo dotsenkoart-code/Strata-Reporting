@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v5.9 Spatial Tagging</title>
+    <title>Strata Command Center | v5.91 Pinpoint Precision</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
@@ -54,18 +54,14 @@
         .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-width: max-content; }
         .drop-header { text-align: center; font-size: 1.2rem; font-weight: bold; color: #0cf; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         
-        /* NEW Y-AXIS STYLES */
         .floor-axis-column { background: transparent; border: none; padding-right: 0; padding-left: 0; min-width: auto; margin-right: -5px; }
         .floor-axis-header { color: transparent; border-bottom-color: transparent; }
-        
         .floor-row { display: flex; align-items: center; margin-bottom: 4px; }
         .floor-label { width: 35px; font-weight: bold; color: #888; font-size: 0.9rem; text-align: right; margin-right: 10px; height: 50px; display: flex; align-items: center; justify-content: flex-end; }
         
         .window-group { display: flex; gap: 4px; flex: 1; justify-content: center; width: 140px; } 
         .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; position: relative; }
         .window-node:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 10; }
-        
-        /* CSS BRIDGE CLASS */
         .stitch-bridge { position: absolute; top: -2px; bottom: -2px; right: -39px; width: 39px; z-index: -1; border-top: 2px solid rgba(0,0,0,0.5); border-bottom: 2px solid rgba(0,0,0,0.5); }
 
         .status-clear { background: #28a745; } 
@@ -76,7 +72,6 @@
 
         /* --- CSS 3D ARENA STYLES --- */
         #arena-3d { display: none; perspective: 1500px; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #1a1d27 0%, #0f111a 100%); border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; align-items: center; justify-content: center; margin-bottom: 20px; }
-        #arena-3d:active { cursor: grabbing; }
         #world-3d { transform-style: preserve-3d; transition: transform 0.1s ease-out; display: flex; align-items: center; justify-content: center; }
         .wall-3d { position: absolute; transform-style: preserve-3d; background: rgba(15, 17, 26, 0.8); border: 2px solid #333; padding: 20px; border-radius: 12px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; gap: 15px; align-items: flex-end; }
         .wall-title-3d { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); color: #0cf; font-size: 1.5rem; font-weight: 900; white-space: nowrap; text-shadow: 0 5px 10px rgba(0,0,0,0.8); }
@@ -85,14 +80,37 @@
         #arena-true3d { display: none; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #2a2d38 0%, #0f111a 100%); border: 1px solid #5a2e7a; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 20px; box-shadow: 0 0 30px rgba(176, 85, 255, 0.2); }
         model-viewer { width: 100%; height: 100%; outline: none; }
         
-        /* 3D PIN HOTSPOTS */
-        .hotspot-dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.8); cursor: pointer; transform: translate(-50%, -50%); transition: transform 0.2s; }
-        .hotspot-dot:hover { transform: translate(-50%, -50%) scale(1.5); }
+        /* 3D PIN HOTSPOTS - FIXED CSS FOR PRECISION */
+        .hotspot-dot { 
+            width: 18px; 
+            height: 18px; 
+            border-radius: 50%; 
+            border: 3px solid #fff; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.8); 
+            cursor: pointer; 
+            transition: transform 0.2s; 
+            padding: 0; 
+            margin: 0; 
+        }
+        .hotspot-dot:hover { transform: scale(1.5); z-index: 100; }
         .hotspot-dot.status-clear { background: #28a745; box-shadow: 0 0 15px #28a745; }
         .hotspot-dot.status-flagged { background: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
         .hotspot-dot.status-confirmed { background: #d9534f; box-shadow: 0 0 15px #d9534f; }
-        .hotspot-label { position: absolute; background: rgba(0,0,0,0.8); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; top: -30px; left: 50%; transform: translateX(-50%); white-space: nowrap; pointer-events: none; border: 1px solid #555; }
-
+        .hotspot-label { 
+            position: absolute; 
+            background: rgba(0,0,0,0.8); 
+            color: #fff; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-size: 0.7rem; 
+            font-weight: bold; 
+            top: -30px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            white-space: nowrap; 
+            pointer-events: none; 
+            border: 1px solid #555; 
+        }
 
         /* --- MODALS --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(3px); }
@@ -119,22 +137,17 @@
 
         .btn { padding: 12px 20px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
         .btn-blue { background: #0cf; color: #000; }
-        .btn-blue:hover { background: #00aadd; }
         .btn-dark { background: #333; color: #fff; border: 1px solid #555; }
-        .btn-dark:hover { background: #444; }
         .btn-red { background: #d9534f; color: #fff; }
-        .btn-red:hover { background: #c9302c; }
         .btn-green { background: #28a745; color: #fff; }
-        .btn-green:hover { background: #218838; }
         .btn-block { width: 100%; margin-top: 10px; }
-        .header-btns { display: flex; gap: 10px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v5.9 Spatial Tagging</span></h1>
+            <h1>STRATA COMMAND <span>| v5.91 Pinpoint Precision</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -202,14 +215,11 @@
         </div>
 
         <div id="arena-3d">
-            
             <div style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #0cf; z-index: 100; text-align: right;">
                 <label style="color:#0cf; font-weight:bold; font-size:0.8rem; margin-bottom:8px; display:block; letter-spacing: 1px;">↔️ ADJUST WALL SPACING</label>
                 <input type="range" id="wallSpacingSlider" min="0" max="1500" value="500" style="width: 200px; cursor: pointer;" oninput="updateManualSpacing(this.value)">
             </div>
-
             <div id="world-3d"></div>
-            
             <div style="position: absolute; bottom: 15px; right: 15px; color: #888; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 20px; display: flex; gap: 15px; pointer-events: none;">
                 <span>🖱️ Click & Drag to Spin</span>
                 <span style="color:#0cf;">🖱️ Scroll to Zoom</span>
@@ -272,7 +282,7 @@
             <p style="color:#888; font-size:0.9rem; margin-bottom:20px;">Select which logged window you just clicked on:</p>
             
             <select id="tagging-window-select" style="width:100%; padding:15px; background:#222; color:#fff; border:1px solid #555; border-radius:8px; font-size:1.1rem; font-weight:bold; margin-bottom:20px;">
-                </select>
+            </select>
             
             <button class="btn btn-green btn-block" onclick="confirm3DTag()">✅ DROP PIN</button>
             <button class="btn btn-dark btn-block" onclick="cancel3DTag()">🔙 CANCEL</button>
@@ -308,7 +318,7 @@
         // --- 3D TAGGING VARIABLES ---
         let isTaggingMode = false;
         let pendingTagCoordinates = null;
-        let saved3DTags = {}; // Stores { windowId: { position: "x y z", normal: "x y z" } }
+        let saved3DTags = {}; 
 
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('multiFileInput');
@@ -439,9 +449,11 @@
             
             if(isTaggingMode) {
                 alert("📍 TAGGING MODE ACTIVE:\nDouble-click anywhere on the 3D model to pin a logged window to that exact physical location.");
-                viewer.autoRotate = false; // Stop spinning while trying to click
+                viewer.autoRotate = false; 
+                viewer.style.cursor = "crosshair"; // Added crosshair for precision
             } else {
                 viewer.autoRotate = true;
+                viewer.style.cursor = "default";
             }
         }
 
@@ -449,12 +461,9 @@
         viewer.addEventListener('dblclick', (event) => {
             if (!isTaggingMode) return;
             
-            const rect = viewer.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            
-            // Extract exact 3D coordinate from the 2D click
-            const hit = viewer.positionAndNormalFromPoint(x, y);
+            // FIX: Use pure window clientX and clientY. Do not subtract bounding box offsets.
+            // This is what gives us absolute pinpoint precision.
+            const hit = viewer.positionAndNormalFromPoint(event.clientX, event.clientY);
             
             if (hit != null) {
                 pendingTagCoordinates = hit;
@@ -507,16 +516,15 @@
             document.getElementById('tagging-modal').style.display = 'none';
             pendingTagCoordinates = null;
             
-            // Turn off tagging mode automatically after a successful drop
             isTaggingMode = false;
             document.getElementById('btn-tag3d').classList.remove('tag-mode-on');
             viewer.autoRotate = true;
+            viewer.style.cursor = "default";
             
             render3DHotspots();
         }
 
         function render3DHotspots() {
-            // Clear existing hotspots
             viewer.querySelectorAll('.hotspot-dot').forEach(el => el.remove());
             
             Object.keys(saved3DTags).forEach(id => {
@@ -528,7 +536,6 @@
                 btn.dataset.position = saved3DTags[id].position;
                 btn.dataset.normal = saved3DTags[id].normal;
                 
-                // Determine final status (checking if stitched)
                 let finalStatus = data.status;
                 let pair = stitchedPairs.find(p => p.includes(data.id));
                 if(pair) finalStatus = getCombinedStatus(pair[0], pair[1]);
