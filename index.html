@@ -1,8 +1,7 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v6.1 Pro Fullscreen</title>
+    <title>Strata Command Center | v6.2 Lean Digital Twin</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
@@ -36,7 +35,6 @@
         #btn-true3d { background: #2b113d; color: #d080ff; border: 1px solid #5a2e7a; }
         #btn-true3d.active { background: #b055ff; color: #fff; }
 
-        /* TOOL TOGGLE STATES */
         .stitch-mode-on { border-color: #f39c12 !important; background: rgba(243, 156, 18, 0.4) !important; color: #fff !important; box-shadow: 0 0 15px rgba(243, 156, 18, 0.8) !important; }
         .tag-mode-on { border-color: #d080ff !important; background: rgba(176, 85, 255, 0.4) !important; color: #fff !important; box-shadow: 0 0 15px rgba(176, 85, 255, 0.8) !important; }
         .node-selected { border-color: #0cf !important; transform: scale(1.1); box-shadow: 0 0 15px #0cf !important; z-index: 20 !important; }
@@ -51,23 +49,23 @@
         .stat-label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
         .stat-value { font-size: 2rem; font-weight: 900; margin-top: 5px; }
 
-        /* --- 2D GRID STYLES --- */
-        #building-container-2d { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 20px; align-items: flex-end; }
-        .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-width: max-content; }
+        /* --- 2D GRID STYLES (STRICT ALIGNMENT FIX) --- */
+        #building-container-2d { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 20px; align-items: stretch; }
+        .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-width: max-content; box-sizing: border-box; }
         
-        /* ALIGNMENT FIX: STRICT HEIGHT & FLEXBOX ON HEADERS */
-        .drop-header { text-align: center; font-size: 1.2rem; font-weight: bold; color: #0cf; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; height: 24px; display: flex; align-items: center; justify-content: center; box-sizing: content-box; }
+        .drop-header { text-align: center; font-size: 1.2rem; font-weight: bold; color: #0cf; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
         
         .floor-axis-column { background: transparent; border: none; padding-right: 0; padding-left: 0; min-width: auto; margin-right: -5px; }
-        .floor-axis-header { color: transparent; border-bottom-color: transparent; }
+        .floor-axis-header { border-bottom-color: transparent; color: transparent; height: 40px; margin-bottom: 10px; padding-bottom: 10px; box-sizing: border-box; }
         
-        .floor-row { display: flex; align-items: center; margin-bottom: 4px; }
-        .floor-label { width: 35px; font-weight: bold; color: #888; font-size: 0.9rem; text-align: right; margin-right: 10px; height: 50px; display: flex; align-items: center; justify-content: flex-end; }
+        .floor-row { display: flex; align-items: center; margin-bottom: 4px; height: 50px; box-sizing: border-box; }
+        .floor-label { width: 35px; font-weight: bold; color: #888; font-size: 0.9rem; text-align: right; margin-right: 10px; height: 50px; display: flex; align-items: center; justify-content: flex-end; box-sizing: border-box; }
         
-        .window-group { display: flex; gap: 4px; flex: 1; justify-content: center; width: 140px; } 
-        .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; position: relative; }
+        .window-group { display: flex; gap: 4px; flex: 1; justify-content: center; width: 140px; height: 50px; box-sizing: border-box; } 
+        .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; position: relative; box-sizing: border-box; }
         .window-node:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 10; }
-        .stitch-bridge { position: absolute; top: -2px; bottom: -2px; right: -39px; width: 39px; z-index: -1; border-top: 2px solid rgba(0,0,0,0.5); border-bottom: 2px solid rgba(0,0,0,0.5); }
+        
+        .stitch-bridge { position: absolute; top: -2px; bottom: -2px; right: -39px; width: 39px; z-index: -1; border-top: 2px solid rgba(0,0,0,0.5); border-bottom: 2px solid rgba(0,0,0,0.5); box-sizing: border-box; }
 
         .status-clear { background: #28a745; } 
         .status-flagged { background: #f1c40f; color: #000; } 
@@ -75,17 +73,10 @@
         .status-empty { background: #222; border: 2px dashed #444; color: #555; pointer-events: none; }
         .status-void { background: transparent; border: 2px solid transparent; cursor: default; pointer-events: none; }
 
-        /* --- 3D ARENAS & FULLSCREEN UI --- */
-        #arena-3d { display: none; perspective: 1500px; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #1a1d27 0%, #0f111a 100%); border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; align-items: center; justify-content: center; margin-bottom: 20px; }
-        #arena-3d:active { cursor: grabbing; }
-        #world-3d { transform-style: preserve-3d; transition: transform 0.1s ease-out; display: flex; align-items: center; justify-content: center; }
-        .wall-3d { position: absolute; transform-style: preserve-3d; background: rgba(15, 17, 26, 0.8); border: 2px solid #333; padding: 20px; border-radius: 12px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; gap: 15px; align-items: flex-end; }
-        .wall-title-3d { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); color: #0cf; font-size: 1.5rem; font-weight: 900; white-space: nowrap; text-shadow: 0 5px 10px rgba(0,0,0,0.8); }
-
+        /* --- TRUE 3D TWIN VIEWER --- */
         #arena-true3d { display: none; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #2a2d38 0%, #0f111a 100%); border: 1px solid #5a2e7a; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 20px; box-shadow: 0 0 30px rgba(176, 85, 255, 0.2); }
         model-viewer { width: 100%; height: 100%; outline: none; }
         
-        /* FLOATING FULLSCREEN TOOLS */
         .btn-fullscreen { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.7); color: #fff; border: 1px solid #555; z-index: 100; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; letter-spacing: 1px; }
         .btn-fullscreen:hover { border-color: #fff; background: #000; }
         
@@ -94,12 +85,41 @@
         .float-btn:hover { border-color: #0cf; }
 
         /* 3D PIN HOTSPOTS */
-        .hotspot-dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.8); cursor: pointer; padding: 0; margin: 0; transform: translate(-50%, -50%); transition: all 0.2s ease-in-out; }
-        .hotspot-dot:hover { transform: translate(-50%, -50%) scale(1.5); z-index: 100; }
+        .hotspot-dot { 
+            width: 18px; 
+            height: 18px; 
+            border-radius: 50%; 
+            border: 3px solid #fff; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.8); 
+            cursor: pointer; 
+            padding: 0; 
+            margin: 0; 
+            transform: translate(-50%, -50%); 
+            transition: all 0.2s ease-in-out;
+        }
+        .hotspot-dot:hover { 
+            transform: translate(-50%, -50%) scale(1.5); 
+            z-index: 100; 
+        }
         .hotspot-dot.status-clear { background: #28a745; box-shadow: 0 0 15px #28a745; }
         .hotspot-dot.status-flagged { background: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
         .hotspot-dot.status-confirmed { background: #d9534f; box-shadow: 0 0 15px #d9534f; }
-        .hotspot-label { position: absolute; background: rgba(0,0,0,0.8); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; top: -30px; left: 50%; transform: translateX(-50%); white-space: nowrap; pointer-events: none; border: 1px solid #555; }
+        
+        .hotspot-label { 
+            position: absolute; 
+            background: rgba(0,0,0,0.8); 
+            color: #fff; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-size: 0.7rem; 
+            font-weight: bold; 
+            top: -30px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            white-space: nowrap; 
+            pointer-events: none; 
+            border: 1px solid #555; 
+        }
 
         /* --- MODALS --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(3px); }
@@ -141,7 +161,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v6.1 Pro Fullscreen</span></h1>
+            <h1>STRATA COMMAND <span>| v6.2 Lean Digital Twin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -176,10 +196,9 @@
         <div class="view-controls">
             <span style="color:#888; font-weight:bold; font-size:0.9rem; margin-right: 10px;">MODE:</span>
             <button class="view-toggle-btn active" id="btn-2d" onclick="switchView('2d')">2D TABS</button>
-            <button class="view-toggle-btn" id="btn-3d" onclick="switchView('3d')">CSS 3D ORBIT</button>
             <button class="view-toggle-btn" id="btn-true3d" onclick="switchView('true3d')">✨ TRUE 3D TWIN</button>
             <div style="flex:0.2;"></div>
-            <button class="view-toggle-btn stitch-toggle" style="border:1px solid #555;" onclick="toggleStitchMode()">🔗 STITCH 2D/3D WIDE WINDOWS</button>
+            <button class="view-toggle-btn stitch-toggle" style="border:1px solid #555;" onclick="toggleStitchMode()">🔗 STITCH 2D WIDE WINDOWS</button>
             <button class="view-toggle-btn tag-toggle" style="border:1px solid #d080ff; display:none;" id="btn-tag3d-main" onclick="toggleTaggingMode()">📍 TAG 3D WINDOW</button>
         </div>
 
@@ -205,26 +224,6 @@
         <div id="view-2d">
             <div class="tabs-container" id="tabs-container"></div>
             <div id="building-container-2d"></div>
-        </div>
-
-        <div id="arena-3d">
-            <button class="btn-fullscreen" onclick="toggleFullScreen('arena-3d')">⛶ FULL SCREEN</button>
-            
-            <div style="position: absolute; top: 65px; right: 15px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #0cf; z-index: 100; text-align: right;">
-                <label style="color:#0cf; font-weight:bold; font-size:0.8rem; margin-bottom:8px; display:block; letter-spacing: 1px;">↔️ ADJUST WALL SPACING</label>
-                <input type="range" id="wallSpacingSlider" min="0" max="1500" value="500" style="width: 200px; cursor: pointer;" oninput="updateManualSpacing(this.value)">
-            </div>
-
-            <div id="world-3d"></div>
-            
-            <div style="position: absolute; bottom: 25px; right: 25px; color: #888; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 20px; display: flex; gap: 15px; pointer-events: none;">
-                <span>🖱️ Drag to Spin</span>
-                <span style="color:#0cf;">🖱️ Scroll to Zoom</span>
-            </div>
-
-            <div class="floating-tools">
-                <button class="float-btn stitch-toggle" onclick="toggleStitchMode()">🔗 STITCH WIDE WINDOWS</button>
-            </div>
         </div>
 
         <div id="arena-true3d">
@@ -316,14 +315,8 @@
         let globalStats = { t:0, f:0, c:0, maxFloor: -Infinity, minFloor: Infinity };
 
         let currentMode = '2d'; 
-        let isDragging = false;
-        let previousMousePosition = { x: 0, y: 0 };
-        let rotationY = -30; 
-        let rotationX = 5;   
-        let zoomZ = -400; 
 
-        let manualRadiusOffset = null;
-
+        // --- 3D TAGGING VARIABLES ---
         let isTaggingMode = false;
         let pendingTagCoordinates = null;
         let saved3DTags = {}; 
@@ -466,6 +459,7 @@
             }
         }
 
+        // --- 3D TAGGING LOGIC ---
         function toggleTaggingMode() {
             isTaggingMode = !isTaggingMode;
             
@@ -486,11 +480,7 @@
         viewer.addEventListener('dblclick', (event) => {
             if (!isTaggingMode) return;
             
-            const rect = viewer.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            
-            const hit = viewer.positionAndNormalFromPoint(x, y);
+            const hit = viewer.positionAndNormalFromPoint(event.clientX, event.clientY);
             
             if (hit != null) {
                 pendingTagCoordinates = hit;
@@ -779,6 +769,7 @@
             });
             
             updateStatsUI();
+            
             render3DHotspots();
         }
 
@@ -791,13 +782,11 @@
         function switchView(mode) {
             currentMode = mode;
             document.getElementById('btn-2d').classList.toggle('active', mode === '2d');
-            document.getElementById('btn-3d').classList.toggle('active', mode === '3d');
             document.getElementById('btn-true3d').classList.toggle('active', mode === 'true3d');
             
             document.getElementById('btn-tag3d-main').style.display = (mode === 'true3d') ? 'inline-block' : 'none';
             
             document.getElementById('view-2d').style.display = (mode === '2d') ? 'block' : 'none';
-            document.getElementById('arena-3d').style.display = (mode === '3d') ? 'flex' : 'none';
             document.getElementById('arena-true3d').style.display = (mode === 'true3d') ? 'block' : 'none';
 
             if (mode !== 'true3d') {
@@ -805,19 +794,10 @@
             }
         }
 
-        function updateManualSpacing(val) {
-            manualRadiusOffset = parseInt(val, 10);
-            if (currentMode === '3d') {
-                render3DArena();
-            }
-        }
-
         function refreshCurrentView() {
             if (currentMode === '2d') {
                 renderTabs();
                 render2DGrid();
-            } else if (currentMode === '3d') {
-                render3DArena();
             }
         }
 
@@ -969,89 +949,6 @@
             container.appendChild(generateWallDOM(activeTab, false));
         }
 
-        function render3DArena() {
-            const world = document.getElementById('world-3d');
-            world.innerHTML = '';
-            world.style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
-
-            const usedElevations = Array.from(new Set(Object.values(dropAssignments)));
-            const numWalls = usedElevations.length;
-            
-            if (numWalls === 0) return;
-            const angleStep = 360 / numWalls;
-            
-            let maxDropsOnAWall = 0;
-            usedElevations.forEach(elev => {
-                const dropsOnThisWall = Object.keys(inspectionData).filter(d => dropAssignments[d] === elev).length;
-                if(dropsOnThisWall > maxDropsOnAWall) maxDropsOnAWall = dropsOnThisWall;
-            });
-            
-            const estimatedMaxWidth = Math.max(300, (maxDropsOnAWall * 170) + 100);
-
-            let radius = 0;
-            if (manualRadiusOffset !== null) {
-                radius = manualRadiusOffset;
-            } else {
-                if (numWalls === 1) {
-                    radius = 0;
-                } else if (numWalls === 2) {
-                    radius = estimatedMaxWidth / 2 + 50; 
-                } else {
-                    radius = (estimatedMaxWidth / 2) / Math.tan(Math.PI / numWalls);
-                    radius += 100; 
-                }
-                const slider = document.getElementById('wallSpacingSlider');
-                if(slider) slider.value = Math.round(radius);
-            }
-
-            usedElevations.forEach((elev, index) => {
-                const wallDiv = document.createElement('div');
-                wallDiv.className = 'wall-3d';
-                wallDiv.innerHTML = `<div class="wall-title-3d">${elev}</div>`;
-                
-                wallDiv.appendChild(generateWallDOM(elev, true));
-                
-                wallDiv.style.transform = `rotateY(${index * angleStep}deg) translateZ(${radius}px)`;
-                world.appendChild(wallDiv);
-            });
-        }
-
-        const arena = document.getElementById('arena-3d');
-        
-        arena.addEventListener('wheel', (e) => {
-            if(currentMode === '3d') {
-                e.preventDefault();
-                zoomZ -= e.deltaY * 2; 
-                document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
-            }
-        }, { passive: false }); 
-
-        arena.addEventListener('mousedown', (e) => { isDragging = true; previousMousePosition = { x: e.clientX, y: e.clientY }; });
-        window.addEventListener('mousemove', (e) => {
-            if (isDragging && currentMode === '3d') {
-                rotationY += (e.clientX - previousMousePosition.x) * 0.4; 
-                rotationX -= (e.clientY - previousMousePosition.y) * 0.4; 
-                if(rotationX > 45) rotationX = 45;
-                if(rotationX < -45) rotationX = -45;
-                document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
-                previousMousePosition = { x: e.clientX, y: e.clientY };
-            }
-        });
-        window.addEventListener('mouseup', () => { isDragging = false; });
-        
-        arena.addEventListener('touchstart', (e) => { isDragging = true; previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }, {passive: true});
-        window.addEventListener('touchmove', (e) => {
-            if (isDragging && currentMode === '3d') {
-                rotationY += (e.touches[0].clientX - previousMousePosition.x) * 0.5;
-                rotationX -= (e.touches[0].clientY - previousMousePosition.y) * 0.5;
-                if(rotationX > 45) rotationX = 45;
-                if(rotationX < -45) rotationX = -45;
-                document.getElementById('world-3d').style.transform = `translateZ(${zoomZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
-                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            }
-        }, {passive: true});
-        window.addEventListener('touchend', () => { isDragging = false; });
-
         function openModal(nodeId) {
             let pair = stitchedPairs.find(p => p.includes(nodeId));
             activeNodeDataArray = [];
@@ -1167,7 +1064,6 @@
                 projectInfo = "Unknown Project";
                 elevations = [];
                 dropAssignments = {};
-                manualRadiusOffset = null;
                 saved3DTags = {};
                 
                 document.getElementById('project-name').innerText = "Awaiting Data...";
