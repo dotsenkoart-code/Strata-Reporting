@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v5.6 Visual Merge</title>
+    <title>Strata Command Center | v5.7 Clean Axis</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
@@ -53,8 +53,12 @@
         .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-width: max-content; }
         .drop-header { text-align: center; font-size: 1.2rem; font-weight: bold; color: #0cf; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         
+        /* NEW Y-AXIS STYLES */
+        .floor-axis-column { background: transparent; border: none; padding-right: 0; padding-left: 0; min-width: auto; margin-right: -5px; }
+        .floor-axis-header { color: transparent; border-bottom-color: transparent; }
+        
         .floor-row { display: flex; align-items: center; margin-bottom: 4px; }
-        .floor-label { width: 35px; font-weight: bold; color: #666; font-size: 0.85rem; text-align: right; margin-right: 8px; }
+        .floor-label { width: 35px; font-weight: bold; color: #888; font-size: 0.9rem; text-align: right; margin-right: 10px; height: 50px; display: flex; align-items: center; justify-content: flex-end; }
         
         .window-group { display: flex; gap: 4px; flex: 1; justify-content: center; width: 140px; } 
         .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; position: relative; }
@@ -120,7 +124,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v5.6 Visual Merge</span></h1>
+            <h1>STRATA COMMAND <span>| v5.7 Clean Axis</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -397,7 +401,6 @@
 
         function handleNodeClick(data, nodeElement) {
             if(isStitchMode) {
-                // NEW UNMERGE FROM STITCH MODE LOGIC
                 let existingPairIndex = stitchedPairs.findIndex(p => p.includes(data.id));
                 if (existingPairIndex !== -1) {
                     if(confirm("This window is already stitched. Do you want to un-stitch it?")) {
@@ -608,6 +611,24 @@
                 });
             }
 
+            // --- Y-AXIS FLOOR COLUMN ---
+            const axisCol = document.createElement('div');
+            axisCol.className = 'drop-column floor-axis-column';
+            
+            const axisHeader = document.createElement('div');
+            axisHeader.className = 'drop-header floor-axis-header';
+            axisHeader.innerText = 'FL';
+            axisCol.appendChild(axisHeader);
+
+            for (let f = renderMaxFloor; f >= renderMinFloor; f--) {
+                const fRow = document.createElement('div');
+                fRow.className = 'floor-row';
+                fRow.innerHTML = `<div class="floor-label">${f}F</div>`;
+                axisCol.appendChild(fRow);
+            }
+            fragment.appendChild(axisCol);
+            
+            // --- DROP COLUMNS ---
             activeDrops.forEach(dropStr => {
                 const dropDiv = document.createElement('div');
                 dropDiv.className = 'drop-column';
@@ -616,7 +637,6 @@
                 for (let f = renderMaxFloor; f >= renderMinFloor; f--) {
                     const floorDiv = document.createElement('div');
                     floorDiv.className = 'floor-row';
-                    floorDiv.innerHTML = `<div class="floor-label">${f}F</div>`;
                     
                     const winGroup = document.createElement('div');
                     winGroup.className = 'window-group';
@@ -646,7 +666,6 @@
                             
                             if (imageBank[data.flir]) winNode.style.border = "2px solid #fff";
 
-                            // THE CSS BRIDGE HACK
                             if (isStitchedLeft) {
                                 winNode.style.borderTopRightRadius = '0';
                                 winNode.style.borderBottomRightRadius = '0';
@@ -797,7 +816,6 @@
             let pair = stitchedPairs.find(p => p.includes(nodeId));
             activeNodeDataArray = [];
             
-            // Show or Hide the Unmerge button
             if (pair) {
                 activeNodeDataArray.push(getNodeData(pair[0]));
                 activeNodeDataArray.push(getNodeData(pair[1]));
@@ -851,7 +869,6 @@
             document.getElementById('info-modal').style.display = 'flex';
         }
 
-        // NEW UNMERGE FUNCTION FROM MODAL
         function unmergeCurrent() {
             if (activeNodeDataArray.length === 2) {
                 const id1 = activeNodeDataArray[0].id;
