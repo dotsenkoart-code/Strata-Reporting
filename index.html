@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v5.1 Digital Twin</title>
+    <title>Strata Command Center | v5.3 Digital Twin</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
@@ -24,6 +24,7 @@
         .elevation-creator input { flex: 1; padding: 12px; background: #111; border: 1px solid #444; color: #fff; border-radius: 6px; font-size: 1rem; }
         .mapping-row { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 15px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #222; }
         .mapping-row select { padding: 10px; background: #222; color: #0cf; border: 1px solid #444; border-radius: 4px; font-size: 1rem; font-weight: bold; width: 200px; }
+        .mapping-row select:disabled { color: #888; border-color: #333; cursor: not-allowed; }
 
         /* --- DASHBOARD CONTROLS --- */
         #dashboard-screen { display: none; }
@@ -116,11 +117,12 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v5.1 Digital Twin</span></h1>
+            <h1>STRATA COMMAND <span>| v5.3 Digital Twin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
             <button class="btn btn-dark" id="btn-reset" style="display:none;" onclick="resetBoard()">🔄 CLEAR</button>
+            <button class="btn btn-dark" id="btn-edit-map" style="display:none;" onclick="editMapping()">🗺️ EDIT MAP</button>
             <button class="btn btn-blue" id="btn-export" style="display:none;" onclick="exportReviewedCSV()">💾 EXPORT CSV</button>
         </div>
     </div>
@@ -135,7 +137,7 @@
 
     <div id="mapping-screen">
         <h2 style="margin-top:0; color:#0cf;">Assign Drops to Walls</h2>
-        <p style="color:#888; margin-bottom: 20px;">Create your building sides, then assign each drop below.</p>
+        <p style="color:#888; margin-bottom: 20px;">Create your architectural structure below. Add your custom walls, then assign drops.</p>
         
         <div class="elevation-creator">
             <input type="text" id="new-elevation-name" placeholder="e.g. North Face, Courtyard, Penthouse...">
@@ -249,9 +251,9 @@
         let imageBank = {}; 
         let linkedPhotosCount = 0;
 
-        let elevations = ["Main Elevation"]; 
+        let elevations = []; 
         let dropAssignments = {}; 
-        let activeTab = "Main Elevation";
+        let activeTab = "";
         let globalStats = { t:0, f:0, c:0, maxFloor: -Infinity, minFloor: Infinity };
 
         let currentMode = '2d'; 
@@ -276,19 +278,16 @@
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 
-                // IMAGE HANDLING
                 if (file.type.startsWith('image/')) {
                     const cleanName = file.name.split('.')[0].toUpperCase();
                     imageBank[cleanName] = URL.createObjectURL(file);
                     linkedPhotosCount++;
                 } 
-                // 3D MODEL HANDLING (NEW)
                 else if (file.name.toLowerCase().endsWith('.glb') || file.name.toLowerCase().endsWith('.gltf')) {
                     const modelUrl = URL.createObjectURL(file);
                     document.getElementById('main-3d-viewer').src = modelUrl;
                     document.getElementById('model-status').innerHTML = `<span style="color:#0cf;">Loaded Custom Model:</span> ${file.name}`;
                 }
-                // CSV HANDLING
                 else if (file.name.toLowerCase().endsWith('.csv')) {
                     csvPromises.push(new Promise((resolve) => {
                         const reader = new FileReader();
@@ -360,7 +359,8 @@
                             notes: existingNotes
                         };
                         
-                        if(!dropAssignments[drop]) dropAssignments[drop] = elevations[0];
+                        // Default to an empty string so it forces the user to assign it
+                        if(!dropAssignments[drop]) dropAssignments[drop] = "";
                     }
                 }
             }
@@ -420,11 +420,29 @@
             renderMappingList();
         }
 
+        // NEW: Allows going back to fix mappings after Dashboard is generated
+        function editMapping() {
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('mapping-screen').style.display = 'block';
+            document.getElementById('btn-export').style.display = 'none';
+            document.getElementById('btn-edit-map').style.display = 'none';
+            renderMappingList();
+        }
+
         function addElevation() {
             const input = document.getElementById('new-elevation-name');
             const val = input.value.trim();
             if(val && !elevations.includes(val)) {
                 elevations.push(val);
+                
+                if (elevations.length === 1) {
+                    activeTab = val;
+                    // Auto-assign any unassigned drops to this first wall to save time
+                    Object.keys(dropAssignments).forEach(d => {
+                        if (dropAssignments[d] === "") dropAssignments[d] = val;
+                    });
+                }
+                
                 input.value = "";
                 renderMappingList();
             }
@@ -435,6 +453,13 @@
             list.innerHTML = "";
             const drops = Object.keys(inspectionData).sort();
 
+            if (elevations.length === 0 && drops.length > 0) {
+                const warning = document.createElement('div');
+                warning.style = "color: #f1c40f; margin-bottom: 15px; font-weight: bold;";
+                warning.innerText = "⚠️ Please add at least one wall above to map your drops.";
+                list.appendChild(warning);
+            }
+
             drops.forEach(dropStr => {
                 const row = document.createElement('div');
                 row.className = 'mapping-row';
@@ -442,22 +467,40 @@
                 
                 const select = document.createElement('select');
                 select.onchange = (e) => { dropAssignments[dropStr] = e.target.value; };
-                elevations.forEach(elev => {
+                
+                if (elevations.length === 0) {
                     const opt = document.createElement('option');
-                    opt.value = elev;
-                    opt.innerText = elev;
-                    if(dropAssignments[dropStr] === elev) opt.selected = true;
+                    opt.value = "";
+                    opt.innerText = "Awaiting Wall...";
                     select.appendChild(opt);
-                });
+                    select.disabled = true;
+                } else {
+                    select.disabled = false;
+                    elevations.forEach(elev => {
+                        const opt = document.createElement('option');
+                        opt.value = elev;
+                        opt.innerText = elev;
+                        if(dropAssignments[dropStr] === elev) opt.selected = true;
+                        select.appendChild(opt);
+                    });
+                }
+                
                 row.appendChild(select);
                 list.appendChild(row);
             });
         }
 
         function generateDashboard() {
+            if (elevations.length === 0) {
+                alert("⚠️ You must add at least one custom wall before generating the dashboard.");
+                return;
+            }
+            
             document.getElementById('mapping-screen').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'block';
             document.getElementById('btn-export').style.display = 'inline-block';
+            // NEW: Show Edit Map button when dashboard is active
+            document.getElementById('btn-edit-map').style.display = 'inline-block';
             
             if(!elevations.includes(activeTab)) activeTab = elevations[0];
             
@@ -818,7 +861,7 @@
                 stitchedPairs = [];
                 linkedPhotosCount = 0;
                 projectInfo = "Unknown Project";
-                elevations = ["Main Elevation"];
+                elevations = [];
                 dropAssignments = {};
                 
                 document.getElementById('project-name').innerText = "Awaiting Data...";
@@ -826,10 +869,10 @@
                 document.getElementById('dashboard-screen').style.display = 'none';
                 document.getElementById('mapping-screen').style.display = 'none';
                 document.getElementById('btn-export').style.display = 'none';
+                document.getElementById('btn-edit-map').style.display = 'none';
                 document.getElementById('btn-reset').style.display = 'none';
                 document.getElementById('btn-start-mapping').style.display = 'none';
                 
-                // Reset the 3D model to the test placeholder
                 document.getElementById('main-3d-viewer').src = "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/LittlestTokyo.glb";
                 document.getElementById('model-status').innerHTML = "Showing Default Test Model. Drop a custom .glb file above to replace.";
                 
