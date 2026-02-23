@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v5.92 Pinpoint & Unpin</title>
+    <title>Strata Command Center | v6.0 Fullscreen & QoL</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
@@ -72,6 +72,7 @@
 
         /* --- CSS 3D ARENA STYLES --- */
         #arena-3d { display: none; perspective: 1500px; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #1a1d27 0%, #0f111a 100%); border: 1px solid #333; border-radius: 12px; overflow: hidden; position: relative; cursor: grab; align-items: center; justify-content: center; margin-bottom: 20px; }
+        #arena-3d:active { cursor: grabbing; }
         #world-3d { transform-style: preserve-3d; transition: transform 0.1s ease-out; display: flex; align-items: center; justify-content: center; }
         .wall-3d { position: absolute; transform-style: preserve-3d; background: rgba(15, 17, 26, 0.8); border: 2px solid #333; padding: 20px; border-radius: 12px; box-shadow: 0 0 50px rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; gap: 15px; align-items: flex-end; }
         .wall-title-3d { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); color: #0cf; font-size: 1.5rem; font-weight: 900; white-space: nowrap; text-shadow: 0 5px 10px rgba(0,0,0,0.8); }
@@ -80,7 +81,7 @@
         #arena-true3d { display: none; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #2a2d38 0%, #0f111a 100%); border: 1px solid #5a2e7a; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 20px; box-shadow: 0 0 30px rgba(176, 85, 255, 0.2); }
         model-viewer { width: 100%; height: 100%; outline: none; }
         
-        /* 3D PIN HOTSPOTS - FIXED CSS FOR ABSOLUTE PINPOINT PRECISION */
+        /* 3D PIN HOTSPOTS */
         .hotspot-dot { 
             width: 18px; 
             height: 18px; 
@@ -90,11 +91,9 @@
             cursor: pointer; 
             padding: 0; 
             margin: 0; 
-            /* This translate(-50%, -50%) forces the physical center of the div to be the anchor point */
             transform: translate(-50%, -50%); 
             transition: all 0.2s ease-in-out;
         }
-        /* It is vital that hover retains the exact same translate offset! */
         .hotspot-dot:hover { 
             transform: translate(-50%, -50%) scale(1.5); 
             z-index: 100; 
@@ -113,7 +112,6 @@
             font-weight: bold; 
             top: -30px; 
             left: 50%; 
-            /* Label is centered relative to the dot */
             transform: translateX(-50%); 
             white-space: nowrap; 
             pointer-events: none; 
@@ -145,17 +143,22 @@
 
         .btn { padding: 12px 20px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
         .btn-blue { background: #0cf; color: #000; }
+        .btn-blue:hover { background: #00aadd; }
         .btn-dark { background: #333; color: #fff; border: 1px solid #555; }
+        .btn-dark:hover { background: #444; }
         .btn-red { background: #d9534f; color: #fff; }
+        .btn-red:hover { background: #c9302c; }
         .btn-green { background: #28a745; color: #fff; }
+        .btn-green:hover { background: #218838; }
         .btn-block { width: 100%; margin-top: 10px; }
+        .header-btns { display: flex; gap: 10px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v5.92 Pinpoint & Unpin</span></h1>
+            <h1>STRATA COMMAND <span>| v6.0 Fullscreen & QoL</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -178,7 +181,7 @@
         <p style="color:#888; margin-bottom: 20px;">Create your architectural structure below. Add your custom walls, then assign drops.</p>
         
         <div class="elevation-creator">
-            <input type="text" id="new-elevation-name" placeholder="e.g. North Face, Courtyard, Penthouse...">
+            <input type="text" id="new-elevation-name" placeholder="e.g. North Face, Courtyard, Penthouse..." onkeypress="if(event.key === 'Enter') addElevation()">
             <button class="btn btn-blue" onclick="addElevation()">➕ ADD WALL</button>
         </div>
         <div id="mapping-list"></div>
@@ -244,10 +247,13 @@
                 tone-mapping="neutral" 
                 shadow-intensity="1">
             </model-viewer>
+            
             <div style="position: absolute; top: 15px; left: 15px; color: #fff; font-size: 0.9rem; font-weight: bold; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 8px; border: 1px solid #d080ff; pointer-events:none;">
                 <strong>Drone Photogrammetry Engine</strong><br>
                 <span id="model-status" style="font-weight:normal; color:#ccc;">Showing Default Test Model. Drop a custom .glb file above to replace.</span>
             </div>
+
+            <button class="btn" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.7); color: #fff; border: 1px solid #5a2e7a; z-index: 100;" onclick="toggleFullScreen()">⛶ FULL SCREEN</button>
         </div>
 
     </div>
@@ -451,6 +457,24 @@
             }
         }
 
+        // --- FULL SCREEN FUNCTIONALITY ---
+        function toggleFullScreen() {
+            const arena = document.getElementById('arena-true3d');
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (arena.requestFullscreen) {
+                    arena.requestFullscreen();
+                } else if (arena.webkitRequestFullscreen) {
+                    arena.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
         // --- 3D TAGGING LOGIC ---
         function toggleTaggingMode() {
             isTaggingMode = !isTaggingMode;
@@ -470,8 +494,6 @@
         viewer.addEventListener('dblclick', (event) => {
             if (!isTaggingMode) return;
             
-            // FIX: The most precise method for extracting a point from <model-viewer>
-            // We use the exact Bounding Client Rect so it ignores all margin/padding on the page.
             const rect = viewer.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
@@ -564,7 +586,6 @@
             });
         }
         
-        // UNPIN FUNCTIONALITY
         function unpinCurrent() {
             if(confirm("Remove this pin from the 3D map? The underlying window data will remain safe in your vault.")) {
                 activeNodeDataArray.forEach(d => {
@@ -761,6 +782,7 @@
             });
             
             updateStatsUI();
+            
             render3DHotspots();
         }
 
@@ -1047,7 +1069,6 @@
                 document.getElementById('btn-unmerge').style.display = 'none';
             }
             
-            // SHOW UNPIN BUTTON IF TAGGED
             if (saved3DTags[nodeId] || (pair && (saved3DTags[pair[0]] || saved3DTags[pair[1]]))) {
                 document.getElementById('btn-unpin').style.display = 'block';
             } else {
