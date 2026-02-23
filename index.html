@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Strata Command Center | v5.91 Pinpoint Precision</title>
+    <title>Strata Command Center | v5.92 Pinpoint & Unpin</title>
     
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
@@ -80,7 +80,7 @@
         #arena-true3d { display: none; width: 100%; height: 80vh; min-height: 700px; background: radial-gradient(circle, #2a2d38 0%, #0f111a 100%); border: 1px solid #5a2e7a; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 20px; box-shadow: 0 0 30px rgba(176, 85, 255, 0.2); }
         model-viewer { width: 100%; height: 100%; outline: none; }
         
-        /* 3D PIN HOTSPOTS - FIXED CSS FOR PRECISION */
+        /* 3D PIN HOTSPOTS - FIXED CSS FOR ABSOLUTE PINPOINT PRECISION */
         .hotspot-dot { 
             width: 18px; 
             height: 18px; 
@@ -88,14 +88,21 @@
             border: 3px solid #fff; 
             box-shadow: 0 0 15px rgba(0,0,0,0.8); 
             cursor: pointer; 
-            transition: transform 0.2s; 
             padding: 0; 
             margin: 0; 
+            /* This translate(-50%, -50%) forces the physical center of the div to be the anchor point */
+            transform: translate(-50%, -50%); 
+            transition: all 0.2s ease-in-out;
         }
-        .hotspot-dot:hover { transform: scale(1.5); z-index: 100; }
+        /* It is vital that hover retains the exact same translate offset! */
+        .hotspot-dot:hover { 
+            transform: translate(-50%, -50%) scale(1.5); 
+            z-index: 100; 
+        }
         .hotspot-dot.status-clear { background: #28a745; box-shadow: 0 0 15px #28a745; }
         .hotspot-dot.status-flagged { background: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
         .hotspot-dot.status-confirmed { background: #d9534f; box-shadow: 0 0 15px #d9534f; }
+        
         .hotspot-label { 
             position: absolute; 
             background: rgba(0,0,0,0.8); 
@@ -106,6 +113,7 @@
             font-weight: bold; 
             top: -30px; 
             left: 50%; 
+            /* Label is centered relative to the dot */
             transform: translateX(-50%); 
             white-space: nowrap; 
             pointer-events: none; 
@@ -147,7 +155,7 @@
 
     <div class="header">
         <div>
-            <h1>STRATA COMMAND <span>| v5.91 Pinpoint Precision</span></h1>
+            <h1>STRATA COMMAND <span>| v5.92 Pinpoint & Unpin</span></h1>
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
@@ -185,8 +193,7 @@
             <button class="view-toggle-btn" id="btn-3d" onclick="switchView('3d')">CSS 3D ORBIT</button>
             <button class="view-toggle-btn" id="btn-true3d" onclick="switchView('true3d')">✨ TRUE 3D TWIN</button>
             <div style="flex:0.2;"></div>
-            <button class="view-toggle-btn" style="border:1px solid #555;" id="btn-stitch" onclick="toggleStitchMode()">🔗 STITCH 2D/3D WIDE WINDOWS</button>
-            
+            <button class="view-toggle-btn" style="border:1px solid #555;" id="btn-stitch" onclick="toggleStitchMode()">🔗 STITCH 2D WIDE WINDOWS</button>
             <button class="view-toggle-btn" style="border:1px solid #d080ff; display:none;" id="btn-tag3d" onclick="toggleTaggingMode()">📍 TAG 3D WINDOW</button>
         </div>
 
@@ -219,7 +226,9 @@
                 <label style="color:#0cf; font-weight:bold; font-size:0.8rem; margin-bottom:8px; display:block; letter-spacing: 1px;">↔️ ADJUST WALL SPACING</label>
                 <input type="range" id="wallSpacingSlider" min="0" max="1500" value="500" style="width: 200px; cursor: pointer;" oninput="updateManualSpacing(this.value)">
             </div>
+
             <div id="world-3d"></div>
+            
             <div style="position: absolute; bottom: 15px; right: 15px; color: #888; font-size: 0.8rem; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 20px; display: flex; gap: 15px; pointer-events: none;">
                 <span>🖱️ Click & Drag to Spin</span>
                 <span style="color:#0cf;">🖱️ Scroll to Zoom</span>
@@ -248,6 +257,7 @@
             <h2 class="modal-title" id="m-id">A-12-L</h2>
             <div class="modal-subtitle" id="m-tech">Logged by Tech at 14:30</div>
             
+            <button class="btn btn-dark btn-block" id="btn-unpin" style="display:none; margin-bottom:10px; border-color:#d080ff; color:#d080ff;" onclick="unpinCurrent()">📍 REMOVE 3D PIN</button>
             <button class="btn btn-dark btn-block" id="btn-unmerge" style="display:none; margin-bottom:15px; border-color:#f39c12; color:#f39c12;" onclick="unmergeCurrent()">✂️ UN-STITCH THESE WINDOWS</button>
             
             <div class="photo-gallery" id="m-photo-gallery"></div>
@@ -448,22 +458,25 @@
             btn.classList.toggle('tag-mode-on', isTaggingMode);
             
             if(isTaggingMode) {
-                alert("📍 TAGGING MODE ACTIVE:\nDouble-click anywhere on the 3D model to pin a logged window to that exact physical location.");
+                alert("📍 TAGGING MODE ACTIVE:\nDouble-click precisely on the 3D model to drop a pin for a logged window.");
                 viewer.autoRotate = false; 
-                viewer.style.cursor = "crosshair"; // Added crosshair for precision
+                viewer.style.cursor = "crosshair"; 
             } else {
                 viewer.autoRotate = true;
                 viewer.style.cursor = "default";
             }
         }
 
-        // Catch double-clicks on the 3D model
         viewer.addEventListener('dblclick', (event) => {
             if (!isTaggingMode) return;
             
-            // FIX: Use pure window clientX and clientY. Do not subtract bounding box offsets.
-            // This is what gives us absolute pinpoint precision.
-            const hit = viewer.positionAndNormalFromPoint(event.clientX, event.clientY);
+            // FIX: The most precise method for extracting a point from <model-viewer>
+            // We use the exact Bounding Client Rect so it ignores all margin/padding on the page.
+            const rect = viewer.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            const hit = viewer.positionAndNormalFromPoint(x, y);
             
             if (hit != null) {
                 pendingTagCoordinates = hit;
@@ -485,7 +498,6 @@
                 });
             });
             
-            // Sort by defect status first (to easily find leaks), then alphabetically
             allIds.sort((a, b) => {
                 if(a.status !== b.status) return a.status === 'status-clear' ? 1 : -1;
                 return a.id.localeCompare(b.id);
@@ -550,6 +562,19 @@
                 
                 viewer.appendChild(btn);
             });
+        }
+        
+        // UNPIN FUNCTIONALITY
+        function unpinCurrent() {
+            if(confirm("Remove this pin from the 3D map? The underlying window data will remain safe in your vault.")) {
+                activeNodeDataArray.forEach(d => {
+                    if(saved3DTags[d.id]) {
+                        delete saved3DTags[d.id];
+                    }
+                });
+                render3DHotspots();
+                closeModal();
+            }
         }
         // --- END 3D TAGGING LOGIC ---
 
@@ -736,8 +761,6 @@
             });
             
             updateStatsUI();
-            
-            // Re-render 3D tags if their status changed
             render3DHotspots();
         }
 
@@ -753,7 +776,6 @@
             document.getElementById('btn-3d').classList.toggle('active', mode === '3d');
             document.getElementById('btn-true3d').classList.toggle('active', mode === 'true3d');
             
-            // Show Tagging button only in True 3D mode
             document.getElementById('btn-tag3d').style.display = (mode === 'true3d') ? 'inline-block' : 'none';
             
             document.getElementById('view-2d').style.display = (mode === '2d') ? 'block' : 'none';
@@ -807,7 +829,6 @@
                 });
             }
 
-            // --- Y-AXIS FLOOR COLUMN ---
             const axisCol = document.createElement('div');
             axisCol.className = 'drop-column floor-axis-column';
             
@@ -824,7 +845,6 @@
             }
             fragment.appendChild(axisCol);
             
-            // --- DROP COLUMNS ---
             activeDrops.forEach(dropStr => {
                 const dropDiv = document.createElement('div');
                 dropDiv.className = 'drop-column';
@@ -1025,6 +1045,13 @@
             } else {
                 activeNodeDataArray.push(getNodeData(nodeId));
                 document.getElementById('btn-unmerge').style.display = 'none';
+            }
+            
+            // SHOW UNPIN BUTTON IF TAGGED
+            if (saved3DTags[nodeId] || (pair && (saved3DTags[pair[0]] || saved3DTags[pair[1]]))) {
+                document.getElementById('btn-unpin').style.display = 'block';
+            } else {
+                document.getElementById('btn-unpin').style.display = 'none';
             }
 
             let ids = activeNodeDataArray.map(d => d.id).join(' + ');
