@@ -262,7 +262,6 @@
             <div id="m-no-photo" class="no-photo-banner">IMAGE NOT UPLOADED TO DASHBOARD</div>
             
             <div class="data-row"><span class="data-label">Field Findings</span><span class="data-val" id="m-finds" style="color:#f1c40f;">--</span></div>
-            <div class="data-row"><span class="data-label">Moisture %</span><span class="data-val" id="m-moisture">--</span></div>
             <div class="data-row"><span class="data-label">Meter Proved</span><span class="data-val" id="m-proved">--</span></div>
             <div class="data-row"><span class="data-label">FLIR Image(s)</span><span class="data-val" id="m-flir" style="color:#0cf;">--</span></div>
             
@@ -405,9 +404,8 @@
                     const fullId = cols[3]; 
                     const flir = cols[4];
                     const finds = cols[5];
-                    const moistPct = cols[6];
-                    const proved = cols[7];
-                    const time = cols[8];
+                    const proved = cols[6]; // Meter Proved is now column 6
+                    const time = cols[7];   // Time is now column 7
 
                     let status = 'status-clear';
                     if (!finds.includes('CLEAR')) status = 'status-flagged'; 
@@ -430,8 +428,9 @@
                             if(inspectionData[drop][floor][pos].status === 'status-flagged') existingStatus = 'status-flagged';
                         }
 
+                        // Removed mPct from data object
                         inspectionData[drop][floor][pos] = {
-                            id: fullId, flir: flir, finds: finds, mPct: moistPct, 
+                            id: fullId, flir: flir, finds: finds, 
                             proved: proved, tech: tech, time: time, status: existingStatus,
                             notes: existingNotes
                         };
@@ -976,7 +975,6 @@
             allFinds = [...new Set(allFinds)].filter(f => f !== 'CLEAR' && f !== '');
             if(allFinds.length === 0) allFinds = ['CLEAR'];
 
-            let mPcts = activeNodeDataArray.map(d => d.mPct).filter(m => m !== '--').join(' & ') || '--';
             let proved = activeNodeDataArray.some(d => d.proved === 'YES') ? 'YES' : 'NO';
             let flirs = activeNodeDataArray.map(d => d.flir).filter(f => f !== '--');
             
@@ -987,7 +985,6 @@
             document.getElementById('m-finds').innerText = allFinds.join(' | ');
             document.getElementById('m-finds').style.color = allFinds.includes('CLEAR') ? '#28a745' : '#f1c40f';
             
-            document.getElementById('m-moisture').innerText = mPcts;
             document.getElementById('m-proved').innerText = proved;
             document.getElementById('m-flir').innerText = flirs.join(' & ') || '--';
             document.getElementById('m-notes').value = notes;
@@ -1085,7 +1082,7 @@
         }
 
         function exportReviewedCSV() {
-            let csv = "Project,Architectural Wall,Drop ID,FLIR Image,Findings,Moisture %,Meter Proved,Office Review Status,Management Notes\n";
+            let csv = "Project,Architectural Wall,Drop ID,FLIR Image,Findings,Meter Proved,Office Review Status,Management Notes\n";
             
             const drops = Object.keys(inspectionData).sort();
             drops.forEach(dropStr => {
@@ -1106,7 +1103,7 @@
                             const cleanNotes = `"${d.notes.replace(/"/g, '""')}"`;
                             const cleanFinds = `"${d.finds}"`;
 
-                            csv += `"${projectInfo}","${wall}","${d.id}","${d.flir}",${cleanFinds},"${d.mPct}","${d.proved}","${textStatus}",${cleanNotes}\n`;
+                            csv += `"${projectInfo}","${wall}","${d.id}","${d.flir}",${cleanFinds},"${d.proved}","${textStatus}",${cleanNotes}\n`;
                         }
                     });
                 });
