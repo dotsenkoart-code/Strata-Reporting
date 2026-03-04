@@ -11,13 +11,6 @@
         .header h1 { margin: 0; font-size: 1.8rem; font-weight: 900; letter-spacing: 1px; color: #fff; }
         .header span { color: #0cf; }
         
-        /* --- UPLOAD ZONE --- */
-        .upload-zone { background: #1a1d27; border: 2px dashed #333; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: 0.3s; margin-bottom: 20px; }
-        .upload-zone:hover, .upload-zone.dragover { border-color: #0cf; background: #202430; }
-        .upload-zone h2 { margin: 0 0 10px 0; color: #888; font-size: 1.2rem; transition: 0.3s; }
-        .upload-zone.compact { padding: 15px; border-style: dotted; }
-        .upload-zone.compact h2 { font-size: 1rem; margin: 0 0 5px 0; }
-
         /* --- MAPPING SCREEN --- */
         #mapping-screen { background: #1a1d27; border-radius: 12px; padding: 25px; border: 1px solid #333; display: none; margin-bottom: 20px; }
         .elevation-creator { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 20px; }
@@ -49,7 +42,7 @@
         .stat-label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
         .stat-value { font-size: 2rem; font-weight: 900; margin-top: 5px; }
 
-        /* --- 2D GRID STYLES (STRICT ALIGNMENT FIX) --- */
+        /* --- 2D GRID STYLES --- */
         #building-container-2d { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 20px; align-items: stretch; }
         .drop-column { background: #161922; border: 1px solid #2a2d38; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; min-width: max-content; box-sizing: border-box; }
         
@@ -85,41 +78,13 @@
         .float-btn:hover { border-color: #0cf; }
 
         /* 3D PIN HOTSPOTS */
-        .hotspot-dot { 
-            width: 18px; 
-            height: 18px; 
-            border-radius: 50%; 
-            border: 3px solid #fff; 
-            box-shadow: 0 0 15px rgba(0,0,0,0.8); 
-            cursor: pointer; 
-            padding: 0; 
-            margin: 0; 
-            transform: translate(-50%, -50%); 
-            transition: all 0.2s ease-in-out;
-        }
-        .hotspot-dot:hover { 
-            transform: translate(-50%, -50%) scale(1.5); 
-            z-index: 100; 
-        }
+        .hotspot-dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.8); cursor: pointer; padding: 0; margin: 0; transform: translate(-50%, -50%); transition: all 0.2s ease-in-out; }
+        .hotspot-dot:hover { transform: translate(-50%, -50%) scale(1.5); z-index: 100; }
         .hotspot-dot.status-clear { background: #28a745; box-shadow: 0 0 15px #28a745; }
         .hotspot-dot.status-flagged { background: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
         .hotspot-dot.status-confirmed { background: #d9534f; box-shadow: 0 0 15px #d9534f; }
         
-        .hotspot-label { 
-            position: absolute; 
-            background: rgba(0,0,0,0.8); 
-            color: #fff; 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            font-size: 0.7rem; 
-            font-weight: bold; 
-            top: -30px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            white-space: nowrap; 
-            pointer-events: none; 
-            border: 1px solid #555; 
-        }
+        .hotspot-label { position: absolute; background: rgba(0,0,0,0.8); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; top: -30px; left: 50%; transform: translateX(-50%); white-space: nowrap; pointer-events: none; border: 1px solid #555; }
 
         /* --- MODALS --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(3px); }
@@ -171,10 +136,16 @@
         </div>
     </div>
 
-    <input type="file" id="multiFileInput" multiple style="display: none;">
-    <div class="upload-zone" id="drop-zone" onclick="document.getElementById('multiFileInput').click()">
-        <h2 id="drop-text">📥 Drop CSVs, Photos, & 3D Models Here</h2>
-        <p id="drop-subtext" style="color:#555; margin:0; font-size:0.9rem;">Accepts .csv, .jpg, .png, .glb, and .gltf files</p>
+    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <input type="file" id="csvInput" accept=".csv" style="display: none;" onchange="handleFiles(this.files)">
+        <button class="btn btn-dark" style="flex: 1; padding: 20px; font-size: 1.1rem; border: 2px dashed #0cf; background: #161922;" onclick="document.getElementById('csvInput').click()">
+            📄 1. LOAD CSV DATA
+        </button>
+
+        <input type="file" id="mediaInput" multiple accept=".jpg,.png,.glb,.gltf" style="display: none;" onchange="handleFiles(this.files)">
+        <button class="btn btn-dark" style="flex: 2; padding: 20px; font-size: 1.1rem; border: 2px dashed #d080ff; background: #161922;" onclick="document.getElementById('mediaInput').click()">
+            🖼️ 2. ADD PHOTOS & 3D MODEL
+        </button>
     </div>
     
     <button id="btn-start-mapping" class="btn btn-green btn-block" style="display:none; padding: 20px; font-size: 1.2rem;" onclick="openMappingScreen()">🗺️ MAP BUILDING ELEVATIONS</button>
@@ -320,48 +291,37 @@
         let pendingTagCoordinates = null;
         let saved3DTags = {}; 
 
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('multiFileInput');
         const viewer = document.querySelector('#main-3d-viewer');
 
-        dropZone.addEventListener('dragover', (e) => { 
-            e.preventDefault(); 
-            dropZone.classList.add('dragover'); 
-        });
-        
-        dropZone.addEventListener('dragleave', (e) => { 
-            e.preventDefault(); 
-            dropZone.classList.remove('dragover'); 
-        });
-        
-        dropZone.addEventListener('drop', (e) => { 
-            e.preventDefault(); 
-            dropZone.classList.remove('dragover'); 
-            handleFiles(e.dataTransfer.files); 
-        });
-        
-        fileInput.addEventListener('change', (e) => { 
-            handleFiles(e.target.files); 
-        });
-
+        // NEW MODULAR FILE HANDLER
         async function handleFiles(files) {
             if (!files || files.length === 0) return;
+            
+            // We use a promise array to ensure the CSV finishes reading before we render
             const csvPromises = [];
+            let newPhotosAdded = 0;
+            let newCsvAdded = false;
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 
-                if (file.type.startsWith('image/')) {
+                if (file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.png')) {
                     const cleanName = file.name.split('.')[0].toUpperCase();
-                    imageBank[cleanName] = URL.createObjectURL(file);
-                    linkedPhotosCount++;
+                    // Stack logic: Only add if it doesn't already exist in the bank
+                    if (!imageBank[cleanName]) {
+                        imageBank[cleanName] = URL.createObjectURL(file);
+                        linkedPhotosCount++;
+                        newPhotosAdded++;
+                    }
                 } 
                 else if (file.name.toLowerCase().endsWith('.glb') || file.name.toLowerCase().endsWith('.gltf')) {
+                    // Instantly replace the 3D model with the new one
                     const modelUrl = URL.createObjectURL(file);
                     viewer.src = modelUrl;
                     document.getElementById('model-status').innerHTML = `<span style="color:#0cf;">Loaded Custom Model:</span> ${file.name}`;
                 }
                 else if (file.name.toLowerCase().endsWith('.csv')) {
+                    newCsvAdded = true;
                     csvPromises.push(new Promise((resolve) => {
                         const reader = new FileReader();
                         reader.onload = (event) => { 
@@ -373,23 +333,32 @@
                 }
             }
 
+            // Wait for any CSVs to finish parsing
             await Promise.all(csvPromises);
 
+            // Update the UI
             document.getElementById('project-name').innerText = "Project: " + projectInfo;
             document.getElementById('stat-photos').innerText = linkedPhotosCount;
-            
-            dropZone.classList.add('compact');
-            document.getElementById('drop-text').innerText = "➕ Add More Files";
-            document.getElementById('drop-subtext').innerText = "Drop CSVs, Photos, or a 3D Model here";
-            
             document.getElementById('btn-reset').style.display = 'inline-block';
-            document.getElementById('btn-start-mapping').style.display = 'block';
             
+            // Show mapping button only if we haven't mapped yet and we added a CSV
+            if (newCsvAdded && document.getElementById('dashboard-screen').style.display !== 'block') {
+                document.getElementById('btn-start-mapping').style.display = 'block';
+            }
+            
+            // If the dashboard is already open, auto-refresh to show the newly added photos
             if (document.getElementById('dashboard-screen').style.display === 'block') {
                 calculateBuildingGeometry();
                 if (currentMode !== 'true3d') refreshCurrentView();
+                
+                if (newPhotosAdded > 0) {
+                    alert(`✅ Successfully added ${newPhotosAdded} new photo(s) to the dashboard.`);
+                }
             }
-            fileInput.value = "";
+
+            // Clear the file inputs so you can click them again to add more
+            document.getElementById('csvInput').value = "";
+            document.getElementById('mediaInput').value = "";
         }
 
         function parseCSV(text) {
@@ -404,8 +373,8 @@
                     const fullId = cols[3]; 
                     const flir = cols[4];
                     const finds = cols[5];
-                    const proved = cols[6]; // Meter Proved is now column 6
-                    const time = cols[7];   // Time is now column 7
+                    const proved = cols[6];
+                    const time = cols[7];
 
                     let status = 'status-clear';
                     if (!finds.includes('CLEAR')) status = 'status-flagged'; 
@@ -428,7 +397,6 @@
                             if(inspectionData[drop][floor][pos].status === 'status-flagged') existingStatus = 'status-flagged';
                         }
 
-                        // Removed mPct from data object
                         inspectionData[drop][floor][pos] = {
                             id: fullId, flir: flir, finds: finds, 
                             proved: proved, tech: tech, time: time, status: existingStatus,
@@ -1074,10 +1042,6 @@
                 
                 document.getElementById('main-3d-viewer').src = "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/LittlestTokyo.glb";
                 document.getElementById('model-status').innerHTML = "Showing Default Test Model. Drop a custom .glb file above to replace.";
-                
-                dropZone.classList.remove('compact');
-                document.getElementById('drop-text').innerText = "📥 Drop CSVs, Photos, & 3D Models Here";
-                document.getElementById('drop-subtext').innerText = "Accepts .csv, .jpg, .png, .glb, and .gltf files";
             }
         }
 
@@ -1118,3 +1082,4 @@
     </script>
 </body>
 </html>
+
