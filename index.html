@@ -3,6 +3,14 @@
 <head>
     <title>Strata Command Center | v6.2 Lean Digital Twin</title>
     
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest_cmd.json">
+    <meta name="theme-color" content="#0f111a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Strata CMD">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
     <style>
@@ -296,20 +304,17 @@
         let globalStats = { t:0, clear:0, f:0, c:0, maxFloor: -Infinity, minFloor: Infinity };
 
         let currentMode = '2d'; 
-        let activeFilter = 'ALL'; // Tracker for the new color filter
+        let activeFilter = 'ALL'; 
 
-        // --- 3D TAGGING VARIABLES ---
         let isTaggingMode = false;
         let pendingTagCoordinates = null;
         let saved3DTags = {}; 
 
         const viewer = document.querySelector('#main-3d-viewer');
 
-        // NEW MODULAR FILE HANDLER
         async function handleFiles(files) {
             if (!files || files.length === 0) return;
             
-            // We use a promise array to ensure the CSV finishes reading before we render
             const csvPromises = [];
             let newPhotosAdded = 0;
             let newCsvAdded = false;
@@ -319,7 +324,6 @@
                 
                 if (file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.png')) {
                     const cleanName = file.name.split('.')[0].toUpperCase();
-                    // Stack logic: Only add if it doesn't already exist in the bank
                     if (!imageBank[cleanName]) {
                         imageBank[cleanName] = URL.createObjectURL(file);
                         linkedPhotosCount++;
@@ -327,7 +331,6 @@
                     }
                 } 
                 else if (file.name.toLowerCase().endsWith('.glb') || file.name.toLowerCase().endsWith('.gltf')) {
-                    // Instantly replace the 3D model with the new one
                     const modelUrl = URL.createObjectURL(file);
                     viewer.src = modelUrl;
                     document.getElementById('model-status').innerHTML = `<span style="color:#0cf;">Loaded Custom Model:</span> ${file.name}`;
@@ -345,20 +348,16 @@
                 }
             }
 
-            // Wait for any CSVs to finish parsing
             await Promise.all(csvPromises);
 
-            // Update the UI
             document.getElementById('project-name').innerText = "Project: " + projectInfo;
             document.getElementById('stat-photos').innerText = linkedPhotosCount;
             document.getElementById('btn-reset').style.display = 'inline-block';
             
-            // Show mapping button only if we haven't mapped yet and we added a CSV
             if (newCsvAdded && document.getElementById('dashboard-screen').style.display !== 'block') {
                 document.getElementById('btn-start-mapping').style.display = 'block';
             }
             
-            // If the dashboard is already open, auto-refresh to show the newly added photos
             if (document.getElementById('dashboard-screen').style.display === 'block') {
                 calculateBuildingGeometry();
                 if (currentMode !== 'true3d') refreshCurrentView();
@@ -368,12 +367,10 @@
                 }
             }
 
-            // Clear the file inputs so you can click them again to add more
             document.getElementById('csvInput').value = "";
             document.getElementById('mediaInput').value = "";
         }
 
-        // CSV PARSER
         function parseCSV(text) {
             const rows = text.trim().split('\n');
             for (let i = 1; i < rows.length; i++) {
@@ -442,27 +439,22 @@
             }
         }
 
-        // --- NEW FILTER LOGIC ---
         function setFilter(filterType) {
-            // Toggle off if clicking the same filter
             if (activeFilter === filterType && filterType !== 'ALL') {
                 activeFilter = 'ALL';
             } else {
                 activeFilter = filterType;
             }
             
-            // Dim the cards that are NOT active
             document.getElementById('filter-card-all').classList.toggle('dimmed', activeFilter !== 'ALL');
             document.getElementById('filter-card-clear').classList.toggle('dimmed', activeFilter !== 'ALL' && activeFilter !== 'status-clear');
             document.getElementById('filter-card-flagged').classList.toggle('dimmed', activeFilter !== 'ALL' && activeFilter !== 'status-flagged');
             document.getElementById('filter-card-confirmed').classList.toggle('dimmed', activeFilter !== 'ALL' && activeFilter !== 'status-confirmed');
 
-            // Instantly refresh the visual displays
             refreshCurrentView();
             render3DHotspots();
         }
 
-        // --- 3D TAGGING LOGIC ---
         function toggleTaggingMode() {
             isTaggingMode = !isTaggingMode;
             
@@ -556,7 +548,6 @@
                 let pair = stitchedPairs.find(p => p.includes(data.id));
                 if(pair) finalStatus = getCombinedStatus(pair[0], pair[1]);
                 
-                // FILTER LOGIC: Skip rendering this pin entirely if it doesn't match the active filter
                 if (activeFilter !== 'ALL' && finalStatus !== activeFilter) return;
 
                 const btn = document.createElement('button');
@@ -884,7 +875,6 @@
 
                             winNode.className = `window-node ${finalStatus}`;
                             
-                            // FILTER LOGIC: Dim out this node if it doesn't match the active filter
                             if (activeFilter !== 'ALL' && finalStatus !== activeFilter) {
                                 winNode.classList.add('node-filtered-out');
                             }
