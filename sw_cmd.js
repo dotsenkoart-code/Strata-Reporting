@@ -1,6 +1,6 @@
 const CACHE_NAME = 'cmd-cache-v1';
 const urlsToCache = [
-  './cmd.html',
+  './index.html',
   './manifest_cmd.json',
   './icon-cmd.jpg'
 ];
