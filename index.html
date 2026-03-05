@@ -37,8 +37,13 @@
         .tab:hover { background: #202430; color: #ccc; }
         .tab.active { background: #0cf; color: #000; border-color: #0cf; }
 
-        .stats-bar { display: flex; gap: 15px; margin-bottom: 20px; }
-        .stat-card { flex: 1; background: #1a1d27; padding: 15px; border-radius: 8px; border-left: 4px solid #333; }
+        /* --- STATS BAR & FILTERS --- */
+        .stats-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .stat-card { flex: 1; background: #1a1d27; padding: 15px; border-radius: 8px; border-left: 4px solid #333; cursor: pointer; transition: transform 0.2s, opacity 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .stat-card.dimmed { opacity: 0.3; }
+        .stat-card.no-hover { cursor: default; }
+        .stat-card.no-hover:hover { transform: none; box-shadow: none; }
         .stat-label { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
         .stat-value { font-size: 2rem; font-weight: 900; margin-top: 5px; }
 
@@ -58,6 +63,8 @@
         .window-node { flex: 1; height: 50px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: rgba(255,255,255,0.9); border: 2px solid rgba(0,0,0,0.5); transition: transform 0.1s; position: relative; box-sizing: border-box; }
         .window-node:hover { transform: scale(1.1); box-shadow: 0 5px 15px rgba(0,0,0,0.8); z-index: 10; }
         
+        .node-filtered-out { opacity: 0.15 !important; filter: grayscale(1) !important; pointer-events: none; border-color: transparent !important; }
+
         .stitch-bridge { position: absolute; top: -2px; bottom: -2px; right: -39px; width: 39px; z-index: -1; border-top: 2px solid rgba(0,0,0,0.5); border-bottom: 2px solid rgba(0,0,0,0.5); box-sizing: border-box; }
 
         .status-clear { background: #28a745; } 
@@ -174,20 +181,24 @@
         </div>
 
         <div class="stats-bar" id="stats-bar">
-            <div class="stat-card" style="border-color:#28a745;">
-                <div class="stat-label">Total Windows</div>
-                <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-card" id="filter-card-all" style="border-color:#888;" onclick="setFilter('ALL')">
+                <div class="stat-label" style="color:#fff;">ALL WINDOWS</div>
+                <div class="stat-value" id="stat-total" style="color:#fff;">0</div>
             </div>
-            <div class="stat-card" style="border-color:#f1c40f;">
-                <div class="stat-label">Pending Review</div>
+            <div class="stat-card" id="filter-card-clear" style="border-color:#28a745;" onclick="setFilter('status-clear')">
+                <div class="stat-label">CLEAR (GREEN)</div>
+                <div class="stat-value" id="stat-clear" style="color:#28a745;">0</div>
+            </div>
+            <div class="stat-card" id="filter-card-flagged" style="border-color:#f1c40f;" onclick="setFilter('status-flagged')">
+                <div class="stat-label">PENDING (YELLOW)</div>
                 <div class="stat-value" id="stat-flagged" style="color:#f1c40f;">0</div>
             </div>
-            <div class="stat-card" style="border-color:#d9534f;">
-                <div class="stat-label">Confirmed Defects</div>
+            <div class="stat-card" id="filter-card-confirmed" style="border-color:#d9534f;" onclick="setFilter('status-confirmed')">
+                <div class="stat-label">DEFECTS (RED)</div>
                 <div class="stat-value" id="stat-confirmed" style="color:#d9534f;">0</div>
             </div>
-            <div class="stat-card" style="border-color:#0cf;">
-                <div class="stat-label">Images Linked</div>
+            <div class="stat-card no-hover" style="border-color:#0cf;">
+                <div class="stat-label">IMAGES LINKED</div>
                 <div class="stat-value" id="stat-photos" style="color:#0cf;">0</div>
             </div>
         </div>
@@ -282,9 +293,10 @@
         let elevations = []; 
         let dropAssignments = {}; 
         let activeTab = "";
-        let globalStats = { t:0, f:0, c:0, maxFloor: -Infinity, minFloor: Infinity };
+        let globalStats = { t:0, clear:0, f:0, c:0, maxFloor: -Infinity, minFloor: Infinity };
 
         let currentMode = '2d'; 
+        let activeFilter = 'ALL'; // Tracker for the new color filter
 
         // --- 3D TAGGING VARIABLES ---
         let isTaggingMode = false;
@@ -361,6 +373,7 @@
             document.getElementById('mediaInput').value = "";
         }
 
+        // CSV PARSER
         function parseCSV(text) {
             const rows = text.trim().split('\n');
             for (let i = 1; i < rows.length; i++) {
@@ -369,9 +382,12 @@
                 
                 if (cols.length >= 8) {
                     if (projectInfo === "Unknown Project") projectInfo = cols[0];
+                    const camId = cols[1]; 
                     const tech = cols[2];
                     const fullId = cols[3]; 
-                    const flir = cols[4];
+                    
+                    let flir = cols[4];
+
                     const finds = cols[5];
                     const proved = cols[6];
                     const time = cols[7];
@@ -424,6 +440,26 @@
                     document.webkitExitFullscreen();
                 }
             }
+        }
+
+        // --- NEW FILTER LOGIC ---
+        function setFilter(filterType) {
+            // Toggle off if clicking the same filter
+            if (activeFilter === filterType && filterType !== 'ALL') {
+                activeFilter = 'ALL';
+            } else {
+                activeFilter = filterType;
+            }
+            
+            // Dim the cards that are NOT active
+            document.getElementById('filter-card-all').classList.toggle('dimmed', activeFilter !== 'ALL');
+            document.getElementById('filter-card-clear').classList.toggle('dimmed', activeFilter !== 'ALL' && activeFilter !== 'status-clear');
+            document.getElementById('filter-card-flagged').classList.toggle('dimmed', activeFilter !== 'ALL' && activeFilter !== 'status-flagged');
+            document.getElementById('filter-card-confirmed').classList.toggle('dimmed', activeFilter !== 'ALL' && activeFilter !== 'status-confirmed');
+
+            // Instantly refresh the visual displays
+            refreshCurrentView();
+            render3DHotspots();
         }
 
         // --- 3D TAGGING LOGIC ---
@@ -516,14 +552,17 @@
                 const data = getNodeData(id);
                 if(!data) return;
                 
+                let finalStatus = data.status;
+                let pair = stitchedPairs.find(p => p.includes(data.id));
+                if(pair) finalStatus = getCombinedStatus(pair[0], pair[1]);
+                
+                // FILTER LOGIC: Skip rendering this pin entirely if it doesn't match the active filter
+                if (activeFilter !== 'ALL' && finalStatus !== activeFilter) return;
+
                 const btn = document.createElement('button');
                 btn.slot = `hotspot-${id}`;
                 btn.dataset.position = saved3DTags[id].position;
                 btn.dataset.normal = saved3DTags[id].normal;
-                
-                let finalStatus = data.status;
-                let pair = stitchedPairs.find(p => p.includes(data.id));
-                if(pair) finalStatus = getCombinedStatus(pair[0], pair[1]);
                 
                 btn.className = `hotspot-dot ${finalStatus}`;
                 btn.onclick = () => openModal(id);
@@ -703,7 +742,7 @@
         }
 
         function calculateBuildingGeometry() {
-            globalStats = { t:0, f:0, c:0, maxFloor: -Infinity, minFloor: Infinity };
+            globalStats = { t:0, clear:0, f:0, c:0, maxFloor: -Infinity, minFloor: Infinity };
             const drops = Object.keys(inspectionData);
             
             drops.forEach(dropStr => {
@@ -716,7 +755,8 @@
                         const d = inspectionData[dropStr][f][pos];
                         globalStats.t++;
                         if (d.status === 'status-flagged') globalStats.f++;
-                        if (d.status === 'status-confirmed') globalStats.c++;
+                        else if (d.status === 'status-confirmed') globalStats.c++;
+                        else globalStats.clear++;
                     });
                 });
             });
@@ -731,17 +771,18 @@
                 let d2 = getNodeData(pair[1]);
                 if (d1 && d2) {
                     if(d1.status === 'status-flagged' && d2.status === 'status-flagged') globalStats.f--;
-                    if(d1.status === 'status-confirmed' && d2.status === 'status-confirmed') globalStats.c--;
+                    else if(d1.status === 'status-confirmed' && d2.status === 'status-confirmed') globalStats.c--;
+                    else if(d1.status === 'status-clear' && d2.status === 'status-clear') globalStats.clear--;
                 }
             });
             
             updateStatsUI();
-            
             render3DHotspots();
         }
 
         function updateStatsUI() {
             document.getElementById('stat-total').innerText = globalStats.t;
+            document.getElementById('stat-clear').innerText = globalStats.clear;
             document.getElementById('stat-flagged').innerText = globalStats.f;
             document.getElementById('stat-confirmed').innerText = globalStats.c;
         }
@@ -842,6 +883,12 @@
                             }
 
                             winNode.className = `window-node ${finalStatus}`;
+                            
+                            // FILTER LOGIC: Dim out this node if it doesn't match the active filter
+                            if (activeFilter !== 'ALL' && finalStatus !== activeFilter) {
+                                winNode.classList.add('node-filtered-out');
+                            }
+
                             winNode.innerText = pos;
                             winNode.onclick = () => handleNodeClick(data, winNode);
                             
@@ -1082,4 +1129,3 @@
     </script>
 </body>
 </html>
-
