@@ -359,6 +359,16 @@
             }
             
             if (document.getElementById('dashboard-screen').style.display === 'block') {
+                
+                // FIX: Auto-assign new unmapped drops to the current active wall so they don't disappear
+                if (newCsvAdded && activeTab !== "") {
+                    Object.keys(dropAssignments).forEach(d => {
+                        if (dropAssignments[d] === "") {
+                            dropAssignments[d] = activeTab;
+                        }
+                    });
+                }
+
                 calculateBuildingGeometry();
                 if (currentMode !== 'true3d') refreshCurrentView();
                 
