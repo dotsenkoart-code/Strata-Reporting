@@ -8,14 +8,9 @@
   "orientation": "landscape",
   "icons": [
     {
-      "src": "icon-cmd.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-cmd-512.png",
+      "src": "icon-cmd.jpg",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/jpeg"
     }
   ]
 }
