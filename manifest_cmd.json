@@ -1,7 +1,7 @@
 {
   "name": "Strata Command Center",
   "short_name": "Strata CMD",
-  "start_url": "./cmd.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0f111a",
   "theme_color": "#0cf",
