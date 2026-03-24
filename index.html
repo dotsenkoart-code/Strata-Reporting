@@ -359,6 +359,10 @@
                     const modelUrl = URL.createObjectURL(file);
                     viewer.src = modelUrl;
                     document.getElementById('model-status').innerHTML = `<span style="color:#0cf;">Loaded Custom Model:</span> ${file.name}`;
+                    
+                    // --- THE FIX: Immediately show the dashboard and force the 3D view ---
+                    document.getElementById('dashboard-screen').style.display = 'block';
+                    switchView('true3d');
                 }
                 else if (file.name.toLowerCase().endsWith('.csv')) {
                     newCsvAdded = true;
