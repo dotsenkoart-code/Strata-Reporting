@@ -228,13 +228,31 @@
         <div id="arena-true3d">
             <button class="btn-fullscreen" onclick="toggleFullScreen('arena-true3d')">⛶ FULL SCREEN</button>
             
+            <div id="orientation-controls" style="position: absolute; top: 60px; right: 15px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border: 1px solid #0cf; z-index: 100; width: 200px; backdrop-filter: blur(5px);">
+                <h4 style="margin: 0 0 10px 0; color: #0cf; font-size: 0.9rem;">Model Orientation</h4>
+                
+                <label style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 5px;">X-Axis (Pitch): <span id="val-x" style="color:#fff;">0</span>°</label>
+                <input type="range" id="rot-x" min="-180" max="180" value="0" style="width: 100%; margin-bottom: 10px;" oninput="updateOrientation()">
+                
+                <label style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 5px;">Y-Axis (Yaw): <span id="val-y" style="color:#fff;">0</span>°</label>
+                <input type="range" id="rot-y" min="-180" max="180" value="0" style="width: 100%; margin-bottom: 10px;" oninput="updateOrientation()">
+                
+                <label style="font-size: 0.75rem; color: #888; display: block; margin-bottom: 5px;">Z-Axis (Roll): <span id="val-z" style="color:#fff;">0</span>°</label>
+                <input type="range" id="rot-z" min="-180" max="180" value="0" style="width: 100%;" oninput="updateOrientation()">
+                
+                <button class="btn btn-dark btn-block" style="margin-top: 15px; padding: 8px; font-size: 0.8rem;" onclick="resetOrientation()">🔄 RESET</button>
+            </div>
+            
             <model-viewer id="main-3d-viewer"
                 src="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/LittlestTokyo.glb" 
                 alt="A 3D model of a building" 
                 auto-rotate 
                 camera-controls 
                 tone-mapping="neutral" 
-                shadow-intensity="1">
+                shadow-intensity="1"
+                bounds="tight"
+                min-camera-orbit="auto auto 5%"
+                max-camera-orbit="auto auto 200%">
             </model-viewer>
             
             <div style="position: absolute; top: 15px; left: 15px; color: #fff; font-size: 0.9rem; font-weight: bold; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 8px; border: 1px solid #d080ff; pointer-events:none; z-index:100;">
@@ -360,7 +378,7 @@
                     viewer.src = modelUrl;
                     document.getElementById('model-status').innerHTML = `<span style="color:#0cf;">Loaded Custom Model:</span> ${file.name}`;
                     
-                    // --- THE FIX: Immediately show the dashboard and force the 3D view ---
+                    // --- Immediately show the dashboard and force the 3D view ---
                     document.getElementById('dashboard-screen').style.display = 'block';
                     switchView('true3d');
                 }
@@ -1168,6 +1186,28 @@
             a.href = URL.createObjectURL(blob); 
             a.download = `Strata_Master_Review_${projectInfo.replace(/\s+/g, '_')}.csv`; 
             a.click();
+        }
+
+        // --- 3D ORIENTATION CONTROLS ---
+        function updateOrientation() {
+            const x = document.getElementById('rot-x').value;
+            const y = document.getElementById('rot-y').value;
+            const z = document.getElementById('rot-z').value;
+            
+            document.getElementById('val-x').innerText = x;
+            document.getElementById('val-y').innerText = y;
+            document.getElementById('val-z').innerText = z;
+            
+            // Apply rotation to the model-viewer
+            const viewer = document.getElementById('main-3d-viewer');
+            viewer.orientation = `${x}deg ${y}deg ${z}deg`;
+        }
+
+        function resetOrientation() {
+            document.getElementById('rot-x').value = 0;
+            document.getElementById('rot-y').value = 0;
+            document.getElementById('rot-z').value = 0;
+            updateOrientation();
         }
     </script>
 
