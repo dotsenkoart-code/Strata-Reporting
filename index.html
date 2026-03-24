@@ -353,6 +353,15 @@
 
         const viewer = document.querySelector('#main-3d-viewer');
 
+        // --- NEW FIX: Force Drone Models to be Double-Sided so they don't disappear when you zoom inside ---
+        viewer.addEventListener('load', () => {
+            if (viewer.model && viewer.model.materials) {
+                viewer.model.materials.forEach(material => {
+                    material.setDoubleSided(true);
+                });
+            }
+        });
+
         // --- FILE HANDLING ---
         async function handleFiles(files) {
             if (!files || files.length === 0) return;
@@ -377,7 +386,6 @@
                     viewer.src = modelUrl;
                     document.getElementById('model-status').innerHTML = `<span style="color:#0cf;">Loaded Custom Model:</span> ${file.name}`;
                     
-                    // --- Immediately show the dashboard and force the 3D view ---
                     document.getElementById('dashboard-screen').style.display = 'block';
                     switchView('true3d');
                 }
@@ -464,12 +472,9 @@
             }
         }
 
-        // --- 3-TIER TAGGING ENGINE ---
-
         function openMasterTagMenu() {
             document.getElementById('tag-master-modal').style.display = 'flex';
             
-            // Pop Single Select
             const sSelect = document.getElementById('tag-single-select');
             sSelect.innerHTML = "";
             let allIds = [];
@@ -485,7 +490,6 @@
                 sSelect.appendChild(opt);
             });
 
-            // Pop Drop Select
             const dSelect = document.getElementById('tag-drop-select');
             dSelect.innerHTML = "";
             Object.keys(inspectionData).sort().forEach(d => {
@@ -495,7 +499,6 @@
                 dSelect.appendChild(opt);
             });
 
-            // Pop Wall Select
             const wSelect = document.getElementById('tag-wall-select');
             wSelect.innerHTML = "";
             elevations.forEach(e => {
@@ -545,15 +548,13 @@
         }
 
         function startReTag() {
-            const id = activeNodeDataArray[0].id; // Retag the primary ID selected
+            const id = activeNodeDataArray[0].id;
             closeModal();
             bulkTagState = { mode: 'retag', targetId: id, step: 0, anchors: [] };
             activateTaggingUI('retag', `Double-Click new location for ${id}`);
         }
 
-        // --- VECTOR MATH PARSER ---
         function parseCoord(coordObj) {
-            // Model Viewer hit.position is a Vector3
             if (coordObj && coordObj.x !== undefined) return [coordObj.x, coordObj.y, coordObj.z];
             return [0,0,0];
         }
@@ -564,7 +565,6 @@
             const hit = viewer.positionAndNormalFromPoint(event.clientX, event.clientY);
             if (!hit) return;
 
-            // Single & Retag
             if (bulkTagState.mode === 'single' || bulkTagState.mode === 'retag') {
                 saved3DTags[bulkTagState.targetId] = { 
                     position: `${hit.position.x} ${hit.position.y} ${hit.position.z}`, 
@@ -575,7 +575,6 @@
                 return;
             }
 
-            // Drop Map
             if (bulkTagState.mode === 'drop') {
                 bulkTagState.anchors.push(hit);
                 bulkTagState.step++;
@@ -589,7 +588,6 @@
                 return;
             }
 
-            // Wall Map
             if (bulkTagState.mode === 'wall') {
                 bulkTagState.anchors.push(hit);
                 bulkTagState.step++;
@@ -605,9 +603,8 @@
             }
         });
 
-        // Linear Interpolation for Drop
         function processDropTagging(dropId, anchors) {
-            let floors = Object.keys(inspectionData[dropId]).map(Number).sort((a,b) => b-a); // Descending (Top to bottom)
+            let floors = Object.keys(inspectionData[dropId]).map(Number).sort((a,b) => b-a);
             if(floors.length === 0) return;
             
             let maxF = floors[0];
@@ -632,7 +629,6 @@
             render3DHotspots();
         }
 
-        // Bilinear Interpolation for Wall
         function processWallTagging(wallName, anchors) {
             let drops = Object.keys(dropAssignments).filter(d => dropAssignments[d] === wallName).sort();
             if(drops.length === 0) { alert("No drops assigned to this wall yet."); return; }
@@ -658,8 +654,6 @@
                 
                 floors.forEach(f => {
                     let v = (fRange === 0) ? 0 : (maxF - f) / fRange;
-
-                    // Bilinear Engine
                     let x = (1-u)*(1-v)*TL[0] + u*(1-v)*TR[0] + (1-u)*v*BL[0] + u*v*BR[0];
                     let y = (1-u)*(1-v)*TL[1] + u*(1-v)*TR[1] + (1-u)*v*BL[1] + u*v*BR[1];
                     let z = (1-u)*(1-v)*TL[2] + u*(1-v)*TR[2] + (1-u)*v*BL[2] + u*v*BR[2];
@@ -702,8 +696,6 @@
                 viewer.appendChild(btn);
             });
         }
-
-        // --- DASHBOARD UI / LOGIC ---
 
         function toggleFullScreen(elementId) {
             const elem = document.getElementById(elementId);
@@ -1187,7 +1179,6 @@
             a.click();
         }
 
-        // --- 3D ORIENTATION CONTROLS ---
         function updateOrientation() {
             const x = document.getElementById('rot-x').value;
             const y = document.getElementById('rot-y').value;
@@ -1197,7 +1188,6 @@
             document.getElementById('val-y').innerText = y;
             document.getElementById('val-z').innerText = z;
             
-            // Apply rotation to the model-viewer
             const viewer = document.getElementById('main-3d-viewer');
             viewer.orientation = `${x}deg ${y}deg ${z}deg`;
         }
