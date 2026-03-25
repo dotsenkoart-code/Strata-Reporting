@@ -154,6 +154,7 @@
             <div id="project-name" style="font-weight: bold; color: #888; margin-top: 5px;">Awaiting Data...</div>
         </div>
         <div class="header-btns">
+            <button class="btn btn-dark" onclick="forceUpdateApp()">🔄 UPDATE APP</button>
             <button class="btn btn-dark" id="btn-reset" style="display:none;" onclick="resetBoard()">🔄 CLEAR</button>
             <button class="btn btn-dark" id="btn-edit-map" style="display:none;" onclick="editMapping()">🗺️ EDIT MAP</button>
             <button class="btn btn-blue" id="btn-export" style="display:none;" onclick="exportReviewedCSV()">💾 EXPORT CSV</button>
@@ -1185,6 +1186,20 @@
             document.getElementById('rot-y').value = 0;
             document.getElementById('rot-z').value = 0;
             updateOrientation();
+        }
+        
+        // --- CACHE CLEARING FOR TABLET UPDATES ---
+        function forceUpdateApp() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        registration.unregister();
+                    }
+                    window.location.reload(true); 
+                });
+            } else {
+                window.location.reload(true);
+            }
         }
     </script>
 
