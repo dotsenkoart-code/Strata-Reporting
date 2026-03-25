@@ -191,7 +191,7 @@
         <div class="view-controls">
             <span style="color:#888; font-weight:bold; font-size:0.9rem; margin-right: 10px;">MODE:</span>
             <button class="view-toggle-btn active" id="btn-2d" onclick="switchView('2d')">2D TABS</button>
-            <button class="view-toggle-btn" id="btn-true3d" onclick="switchView('true3d')">✨ TRUE 3D TWIN</button>
+            <button class="view-toggle-btn" id="btn-true3d" onclick="switchView('true3d')">TRUE 3D TWIN</button>
             <div style="flex:0.2;"></div>
             <button class="view-toggle-btn stitch-toggle" style="border:1px solid #555;" onclick="toggleStitchMode()">🔗 STITCH 2D WIDE WINDOWS</button>
             <button class="view-toggle-btn tag-toggle" style="border:1px solid #d080ff; display:none;" id="btn-tag3d-main" onclick="openMasterTagMenu()">📍 3D TAG MENU</button>
@@ -244,7 +244,7 @@
             </div>
             
             <model-viewer id="main-3d-viewer"
-                src="https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/LittlestTokyo.glb" 
+                src="" 
                 alt="A 3D model of a building" 
                 auto-rotate 
                 camera-controls 
@@ -353,15 +353,6 @@
 
         const viewer = document.querySelector('#main-3d-viewer');
 
-        // --- NEW FIX: Force Drone Models to be Double-Sided so they don't disappear when you zoom inside ---
-        viewer.addEventListener('load', () => {
-            if (viewer.model && viewer.model.materials) {
-                viewer.model.materials.forEach(material => {
-                    material.setDoubleSided(true);
-                });
-            }
-        });
-
         // --- FILE HANDLING ---
         async function handleFiles(files) {
             if (!files || files.length === 0) return;
@@ -385,9 +376,6 @@
                     const modelUrl = URL.createObjectURL(file);
                     viewer.src = modelUrl;
                     document.getElementById('model-status').innerHTML = `<span style="color:#0cf;">Loaded Custom Model:</span> ${file.name}`;
-                    
-                    document.getElementById('dashboard-screen').style.display = 'block';
-                    switchView('true3d');
                 }
                 else if (file.name.toLowerCase().endsWith('.csv')) {
                     newCsvAdded = true;
@@ -548,7 +536,7 @@
         }
 
         function startReTag() {
-            const id = activeNodeDataArray[0].id;
+            const id = activeNodeDataArray[0].id; // Retag the primary ID selected
             closeModal();
             bulkTagState = { mode: 'retag', targetId: id, step: 0, anchors: [] };
             activateTaggingUI('retag', `Double-Click new location for ${id}`);
@@ -1143,7 +1131,7 @@
                 document.getElementById('btn-reset').style.display = 'none';
                 document.getElementById('btn-start-mapping').style.display = 'none';
                 
-                document.getElementById('main-3d-viewer').src = "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/LittlestTokyo.glb";
+                document.getElementById('main-3d-viewer').src = "";
                 document.getElementById('model-status').innerHTML = "Showing Default Test Model. Drop a custom .glb file above to replace.";
             }
         }
